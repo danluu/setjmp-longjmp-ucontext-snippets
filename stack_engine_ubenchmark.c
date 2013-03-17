@@ -43,7 +43,7 @@ int main(void) {
 										: "%rax", "%rcx");
 		}
 		tsc_after = rdtsc();
-		a = (tsc_after - tsc_before) / RUNS;
+		a += (tsc_after - tsc_before) / RUNS;
 		printf("A: %i\n", tsc_after - tsc_before);
 		
 		tsc_before = rdtsc();
@@ -59,7 +59,7 @@ int main(void) {
 		tsc_after = rdtsc();
 		
 		printf("B: %i\n", tsc_after - tsc_before);	
-		b = (tsc_after - tsc_before) / RUNS;
+		b += (tsc_after - tsc_before) / RUNS;
 		
 		tsc_before = rdtsc();
 		for(i = 0; i < LOOP_MAX; ++i){
@@ -74,7 +74,7 @@ int main(void) {
 		tsc_after = rdtsc();
 		
 		printf("C: %i\n", tsc_after - tsc_before);
-		c = (tsc_after - tsc_before) / RUNS;
+		c += (tsc_after - tsc_before) / RUNS;
 	}
 
 	printf("no dependency / read dependency / read+write dependency: %i %i %i\n", a, b, c);
