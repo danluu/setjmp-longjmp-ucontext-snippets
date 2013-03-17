@@ -6,6 +6,7 @@
 												"=a" (ax), "=b" (bx), "=c" (cx), "=d" (dx) : "a" (func));
 
 #define LOOP_MAX 100000000
+#define RUNS 10
 
 jmp_buf mainTask, childTask;
  
@@ -29,35 +30,59 @@ inline int rdtsc(void){
 }
  
 int main(void) {
-	int i = 0;
+	int i,j = 0;
 	int tsc_before, tsc_after;
+	int a, b, c;
 
-	tsc_before = rdtsc();
-	for(i = 0; i < LOOP_MAX; ++i){
-		asm volatile ("push %%rax;"
-								 "mov %%ebx, %%ecx;"
-								 "pop %%rax;"
-								 :
-								 :
-								 : "%rax", "%rcx", "%rsp");
+
+
+	for(j = 0; j < RUNS; ++j){
+
+		tsc_before = rdtsc();
+		for(i = 0; i < LOOP_MAX; ++i){
+			asm volatile ("push %%rax;"
+										"mov %%rbx, %%rcx;"
+										"mov %%rbx, %%rcx;"
+										"pop %%rax;"
+										:
+										:
+										: "%rax", "%rcx");
+		}
+		tsc_after = rdtsc();
+		a = (tsc_after - tsc_before) / RUNS;
+		printf("A: %i\n", tsc_after - tsc_before);
+		
+		tsc_before = rdtsc();
+		for(i = 0; i < LOOP_MAX; ++i){
+			asm volatile ("push %%rax;"
+										"mov %%rsp, %%rcx;"
+										"mov %%rsp, %%rcx;"
+										"pop %%rax;"
+										:
+										:
+										: "%rax", "%rcx");
+		}
+		tsc_after = rdtsc();
+		
+		printf("B: %i\n", tsc_after - tsc_before);	
+		b = (tsc_after - tsc_before) / RUNS;
+		
+		tsc_before = rdtsc();
+		for(i = 0; i < LOOP_MAX; ++i){
+			asm volatile ("push %%rax;"
+										"mov %%rsp, %%rcx;"
+										"mov %%rcx, %%rsp;"
+										"pop %%rax;"
+										:
+										:
+										: "%rax", "%rcx");
+		}
+		tsc_after = rdtsc();
+		
+		printf("C: %i\n", tsc_after - tsc_before);
+		c = (tsc_after - tsc_before) / RUNS;
 	}
-	tsc_after = rdtsc();
 
-	
-
-	printf("total A: %i\n", tsc_after - tsc_before);
-
-	tsc_before = rdtsc();
-	for(i = 0; i < LOOP_MAX; ++i){
-		asm volatile ("push %%rax;"
-								 "mov %%esp, %%ecx;"
-								 "pop %%rax;"
-								 :
-								 :
-								 : "%rax", "%rcx", "%rsp");
-	}
-	tsc_after = rdtsc();
-
-	printf("total B: %i\n", tsc_after - tsc_before);
+	printf("no dependency / read dependency / read+write dependency: %i %i %i\n", a, b, c);
 
 }
