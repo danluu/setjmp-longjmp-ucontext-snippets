@@ -1,4 +1,3 @@
-#include <setjmp.h>
 #include <stdio.h>
  
 #define cpuid(func,ax,bx,cx,dx)\
@@ -7,11 +6,6 @@
 
 #define LOOP_MAX 100000000
 #define RUNS 10
-
-jmp_buf mainTask, childTask;
- 
-void call_with_cushion(void);
-void child(void);
 
 inline int rdtsc(void){
 	int tsc = 0;
