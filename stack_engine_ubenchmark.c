@@ -35,7 +35,7 @@ int main(void) {
 	tsc_before = rdtsc();
 	for(i = 0; i < LOOP_MAX; ++i){
 		asm volatile ("push %%rax;"
-								 "mov %%ecx, %%ebx;"
+								 "mov %%ebx, %%ecx;"
 								 "pop %%rax;"
 								 :
 								 :
@@ -50,14 +50,13 @@ int main(void) {
 	tsc_before = rdtsc();
 	for(i = 0; i < LOOP_MAX; ++i){
 		asm volatile ("push %%rax;"
-								 "mov %%ecx, %%esp;"
+								 "mov %%esp, %%ecx;"
 								 "pop %%rax;"
 								 :
 								 :
 								 : "%rax", "%rcx", "%rsp");
 	}
 	tsc_after = rdtsc();
-	asm volatile("mov %esp, %ecx");
 
 	printf("total B: %i\n", tsc_after - tsc_before);
 
