@@ -2,7 +2,9 @@
 #include "rdtsc.h"
 
 #define LOOP_MAX 100000000
+#define WARMUP_RUNS 2
 #define RUNS 10
+
 
 #define BENCHMARK_CODE(code)			\
 	({					\
@@ -67,18 +69,16 @@ int main() {
 
 	printf("[*] Warming up the code\n");
 	int test_no, run_no;
-	for (run_no = 0; run_no < 3; run_no += 1) {
-		for (test_no = 0; tests[test_no].fun; test_no += 1) {
+	for (run_no = 0; run_no < WARMUP_RUNS; run_no += 1)
+		for (test_no = 0; tests[test_no].fun; test_no += 1)
 			tests[test_no].fun();
-		}
-	}
 
 	printf("[*] Running the benchmarks\n");
 	for (run_no = 0; run_no < RUNS; run_no += 1) {
+		printf("[ ] run %i/%i\n", run_no+1, RUNS);
 		for (test_no = 0; tests[test_no].fun; test_no += 1) {
 			uint64_t t = tests[test_no].fun();
 			tests[test_no].t += t;
-			printf("[ ] #%i %llu\n", test_no, t);
 		}
 	}
 
@@ -88,6 +88,5 @@ int main() {
 		       tests[test_no].t
 			);
 	}
-
 	return 0;
 }
