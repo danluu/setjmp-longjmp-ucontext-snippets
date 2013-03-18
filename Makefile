@@ -1,6 +1,10 @@
 CC=gcc
 
-.PHONY: test
+.PHONY: test coroutine
+
+coroutine:
+	$(CC) -O -Wall -Wextra -g -ggdb \
+		coroutines.c coroutine_test.c -o coroutine && ./coroutine
 
 test:
 	$(CC) -O3 -Wall -Wextra -g -ggdb \
