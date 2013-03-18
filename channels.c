@@ -29,7 +29,6 @@ void channels_scheduler(void)
 				{
 					if (runnable_pids[p])
 						{
-							printf("channels_scheduler yielding %i\n", p);
 							counter++;
 							coro_yield(p);
 							if (!coro_runnable(p))
