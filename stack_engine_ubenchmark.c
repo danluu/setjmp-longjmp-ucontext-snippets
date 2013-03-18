@@ -34,7 +34,16 @@ int main(void) {
 
 		tsc_before = rdtsc();
 		for(i = 0; i < LOOP_MAX; ++i){
-			asm volatile ("push %%rax;"
+			asm volatile (
+                    "push %%rax;"
+										"mov %%rbx, %%rcx;"
+										"mov %%rbx, %%rcx;"
+										"pop %%rdx;"
+                    "push %%rax;"
+										"mov %%rbx, %%rcx;"
+										"mov %%rbx, %%rcx;"
+										"pop %%rdx;"
+                    "push %%rax;"
 										"mov %%rbx, %%rcx;"
 										"mov %%rbx, %%rcx;"
 										"pop %%rdx;"
@@ -48,7 +57,16 @@ int main(void) {
 		
 		tsc_before = rdtsc();
 		for(i = 0; i < LOOP_MAX; ++i){
-			asm volatile ("push %%rax;"
+			asm volatile (
+										"push %%rax;"
+										"mov %%rsp, %%rcx;"
+										"mov %%rsp, %%rcx;"
+										"pop %%rdx;"
+										"push %%rax;"
+										"mov %%rsp, %%rcx;"
+										"mov %%rsp, %%rcx;"
+										"pop %%rdx;"
+										"push %%rax;"
 										"mov %%rsp, %%rcx;"
 										"mov %%rsp, %%rcx;"
 										"pop %%rdx;"
@@ -63,7 +81,16 @@ int main(void) {
 		
 		tsc_before = rdtsc();
 		for(i = 0; i < LOOP_MAX; ++i){
-			asm volatile ("push %%rax;"
+			asm volatile (
+										"push %%rax;"
+										"mov %%rsp, %%rcx;"
+										"mov %%rcx, %%rsp;"
+										"pop %%rdx;"
+										"push %%rax;"
+										"mov %%rsp, %%rcx;"
+										"mov %%rcx, %%rsp;"
+										"pop %%rdx;"
+										"push %%rax;"
 										"mov %%rsp, %%rcx;"
 										"mov %%rcx, %%rsp;"
 										"pop %%rdx;"
