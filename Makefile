@@ -1,6 +1,10 @@
 CC=gcc
 
-.PHONY: test coroutine
+.PHONY: test coroutine channel
+
+channel:
+	$(CC) -O -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		channels.c coroutines.c channel_test.c -o channel && ./channel
 
 coroutine:
 	$(CC) -O -Wall -Wextra -Wno-unused-parameter -g -ggdb \
