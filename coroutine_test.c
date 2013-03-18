@@ -4,7 +4,7 @@
 
 #include "coroutines.h"
 
-static void test_one(int pid);
+static void test_one();
 
 int main()
 {
@@ -32,18 +32,16 @@ int main()
   return 0;
 }
 
-static void test_one(int pid)
+static void test_one()
 {
   coro_yield(0);
   int p;
   for (p = 0; p < 2; p++)
     {
-      printf("test_one(%d): %i\n", pid, p);
-      assert(coro_pid == pid);
+      printf("test_one(%d): %i\n", coro_pid, p);
       coro_yield(0); // yield to top context
-      assert(coro_pid == pid);
     }
-  printf("test_one(%d): done\n", pid);
+  printf("test_one(%d): done\n", coro_pid);
   coro_yield(0);
   assert(0);
 }

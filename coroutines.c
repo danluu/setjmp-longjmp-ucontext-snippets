@@ -29,9 +29,9 @@ void coro_yield(int pid)
     }
 }
  
-void (*spawned_fun)(int);
+coro_callback spawned_fun;
  
-int coro_spawn(void (*f)(int))
+int coro_spawn(coro_callback f)
 {
   // funky off by one stuff here maybe
   static int pid_counter = 0;
@@ -44,7 +44,6 @@ int coro_spawn(void (*f)(int))
 // have never exit so we get a pristine stack for our coroutines
 static void grow_stack(int n, int num_coros)
 {
-  int p;
   char big_array[2048];
   memset(big_array, 0, sizeof(big_array));
  
@@ -62,7 +61,7 @@ static void grow_stack(int n, int num_coros)
   else
     {
       // how does spawn/fork work?
-      spawned_fun(n);
+      spawned_fun();
       assert(0);
     }
 }
