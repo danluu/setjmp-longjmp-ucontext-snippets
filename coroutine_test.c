@@ -11,28 +11,40 @@ int main()
   coro_allocate(10);
   printf("main: coro_allocate finished\n");
   int p;
-  int pid = coro_spawn(test_one);
-  printf("main: coro_spawn finished\n");
+  int i;
+  int pids[10];
+
+  for (p = 0; p < 10; p++)
+    {
+      pids[p] = coro_spawn(test_one);
+      printf("main: coro_spawn %d\n", pids[p]);
+    }
   assert(coro_pid == 0);
-  coro_yield(pid);
-  printf("main: never got here\n");
+  for (i = 0; i < 3; i++)
+    {
+      for (p = 0; p < 10; p++)
+        {
+          printf("main: yielding %d (i = %d)\n", pids[p], i);
+          coro_yield(pids[p]);
+        }
+    }
+  printf("main: finished\n");
   return 0;
-}
-
-static void scheduler()
-{
-
 }
 
 static void test_one(int pid)
 {
+  coro_yield(0);
   int p;
-  for (p = 0; p < 10; p++)
-		{
-			printf("test_one(%d): &p --> %ld\n", pid, (long)&p);
-			assert(coro_pid == pid);
-			coro_yield(0); // yield to top context
-			assert(coro_pid == pid);
-		}
+  for (p = 0; p < 2; p++)
+    {
+      printf("test_one(%d): %i\n", pid, p);
+      assert(coro_pid == pid);
+      coro_yield(0); // yield to top context
+      assert(coro_pid == pid);
+    }
+  printf("test_one(%d): done\n", pid);
+  coro_yield(0);
+  assert(0);
 }
 
