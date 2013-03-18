@@ -3,7 +3,7 @@ CC=gcc
 .PHONY: test coroutine
 
 coroutine:
-	$(CC) -O -Wall -Wextra -g -ggdb \
+	$(CC) -O -Wall -Wextra -Wno-unused-parameter -g -ggdb \
 		coroutines.c coroutine_test.c -o coroutine && ./coroutine
 
 test:

@@ -38,16 +38,19 @@ int coro_runnable(int pid)
 }
  
 coro_callback spawned_fun;
+void* spawned_user_state;
  
-int coro_spawn(coro_callback f)
+int coro_spawn(coro_callback f, void* user_state)
 {
   int pid;
+  spawned_fun = f;
+  spawned_user_state = user_state;
+
   for (pid = 0; pid < coro_max; pid++)
     {
     if (used_pids[pid] == 0)
       {
         used_pids[pid] = 1;
-        spawned_fun = f;
         coro_yield(pid);
         return pid;        
       }
@@ -83,7 +86,7 @@ static void grow_stack(int n, int num_coros)
           spawned_fun = NULL;
 
           assert(n == coro_pid);
-          f();
+          f(spawned_user_state);
           used_pids[n] = 0;
           coro_yield(0);
         }

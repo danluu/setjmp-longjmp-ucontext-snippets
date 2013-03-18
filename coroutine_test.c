@@ -4,19 +4,18 @@
 
 #include "coroutines.h"
 
-static void test_one();
+static void test_one(void*);
 
 int main()
 {
   coro_allocate(10);
   printf("main: coro_allocate finished\n");
   int p;
-  int i;
   int pids[10];
 
   for (p = 0; p < 10; p++)
     {
-      pids[p] = coro_spawn(test_one);
+      pids[p] = coro_spawn(test_one, NULL);
       printf("main: coro_spawn %d\n", pids[p]);
     }
   assert(coro_pid == 0);
@@ -32,7 +31,7 @@ int main()
   return 0;
 }
 
-static void test_one()
+static void test_one(void* _)
 {
   coro_yield(0);
   int p;
