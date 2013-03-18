@@ -1,109 +1,94 @@
 #include <stdio.h>
- 
-#define cpuid(func,ax,bx,cx,dx)\
-	__asm__ __volatile__ ("cpuid":\
-												"=a" (ax), "=b" (bx), "=c" (cx), "=d" (dx) : "a" (func));
+#include "rdtsc.h"
+#include "stddev.h"
 
 #define LOOP_MAX 100000000
+#define WARMUP_RUNS 2
 #define RUNS 10
 
-inline int rdtsc(void){
-	int tsc = 0;
 
-	volatile int dont_remove __attribute__((unused)); // volatile to stop optimizing
-	unsigned tmp;
-	cpuid(0, tmp, tmp, tmp, tmp);                   // cpuid is a serialising call
-	dont_remove = tmp;                                // prevent optimizing out cpuid
-	__asm__ __volatile__("rdtsc; "          // read of tsc
-											 "shl $32,%%rdx; "  // shift higher 32 bits stored in rdx up
-											 "or %%rdx,%%rax"   // and or onto rax
-											 : "=a"(tsc)        // output to tsc
-											 :
-											 : "%rcx", "%rdx"); // rcx and rdx are clobbered
-	return tsc;
+#define BENCHMARK_CODE(code)			\
+	({					\
+	uint64_t tsc_before, tsc_after;		\
+	int i;					\
+	RDTSC_START(tsc_before);		\
+	for(i = 0; i < LOOP_MAX; ++i){		\
+		code;				\
+			}			\
+	RDTSC_STOP(tsc_after);			\
+	(tsc_after - tsc_before);		\
+	})
+
+
+static uint64_t test_nodep() {
+	return BENCHMARK_CODE(
+		asm volatile ("push %%rax;"
+			      "mov %%rbx, %%rcx;"
+			      "mov %%rbx, %%rcx;"
+			      "pop %%rax;"
+			      :
+			      :
+			      : "%rax", "%rcx")
+			);
 }
- 
-int main(void) {
-	int i,j = 0;
-	int tsc_before, tsc_after;
-	int a, b, c;
 
+static uint64_t test_rodep() {
+	return BENCHMARK_CODE(
+		asm volatile ("push %%rax;"
+			      "mov %%rsp, %%rcx;"
+			      "mov %%rsp, %%rcx;"
+			      "pop %%rax;"
+			      :
+			      :
+			      : "%rax", "%rcx")
+		);
+}
 
+static uint64_t test_rwdep() {
+	return  BENCHMARK_CODE(
+		asm volatile ("push %%rax;"
+			      "mov %%rsp, %%rcx;"
+			      "mov %%rcx, %%rsp;"
+			      "pop %%rax;"
+			      :
+			      :
+			      : "%rax", "%rcx")
+		);
+}
 
-	for(j = 0; j < RUNS; ++j){
+int main() {
+	struct {
+		uint64_t (*fun)();
+		char *name;
+		struct stddev stddev;
+	} tests[] = {
+		{test_nodep, "no dependency", INIT_STDDEV},
+		{test_rodep, "read dependency", INIT_STDDEV},
+		{test_rwdep, "read+write dependency", INIT_STDDEV},
+		{NULL, NULL, INIT_STDDEV}
+	};
 
-		tsc_before = rdtsc();
-		for(i = 0; i < LOOP_MAX; ++i){
-			asm volatile (
-                    "push %%rax;"
-										"mov %%rbx, %%rcx;"
-										"mov %%rbx, %%rcx;"
-										"pop %%rdx;"
-                    "push %%rax;"
-										"mov %%rbx, %%rcx;"
-										"mov %%rbx, %%rcx;"
-										"pop %%rdx;"
-                    "push %%rax;"
-										"mov %%rbx, %%rcx;"
-										"mov %%rbx, %%rcx;"
-										"pop %%rdx;"
-										:
-										:
-										: "%rax", "%rcx", "%rdx");
+	printf("[*] Warming up the code\n");
+	int test_no, run_no;
+	for (run_no = 0; run_no < WARMUP_RUNS; run_no += 1)
+		for (test_no = 0; tests[test_no].fun; test_no += 1)
+			tests[test_no].fun();
+
+	printf("[*] Running the benchmarks\n");
+	for (run_no = 0; run_no < RUNS; run_no += 1) {
+		printf("[ ] run %i/%i\n", run_no+1, RUNS);
+		for (test_no = 0; tests[test_no].fun; test_no += 1) {
+			uint64_t t = tests[test_no].fun();
+			stddev_add(&tests[test_no].stddev, t);
 		}
-		tsc_after = rdtsc();
-		a += (tsc_after - tsc_before) / RUNS;
-		printf("A: %i\n", tsc_after - tsc_before);
-		
-		tsc_before = rdtsc();
-		for(i = 0; i < LOOP_MAX; ++i){
-			asm volatile (
-										"push %%rax;"
-										"mov %%rsp, %%rcx;"
-										"mov %%rsp, %%rcx;"
-										"pop %%rdx;"
-										"push %%rax;"
-										"mov %%rsp, %%rcx;"
-										"mov %%rsp, %%rcx;"
-										"pop %%rdx;"
-										"push %%rax;"
-										"mov %%rsp, %%rcx;"
-										"mov %%rsp, %%rcx;"
-										"pop %%rdx;"
-										:
-										:
-										: "%rax", "%rcx", "%rdx");
-		}
-		tsc_after = rdtsc();
-		
-		printf("B: %i\n", tsc_after - tsc_before);	
-		b += (tsc_after - tsc_before) / RUNS;
-		
-		tsc_before = rdtsc();
-		for(i = 0; i < LOOP_MAX; ++i){
-			asm volatile (
-										"push %%rax;"
-										"mov %%rsp, %%rcx;"
-										"mov %%rcx, %%rsp;"
-										"pop %%rdx;"
-										"push %%rax;"
-										"mov %%rsp, %%rcx;"
-										"mov %%rcx, %%rsp;"
-										"pop %%rdx;"
-										"push %%rax;"
-										"mov %%rsp, %%rcx;"
-										"mov %%rcx, %%rsp;"
-										"pop %%rdx;"
-										:
-										:
-										: "%rax", "%rcx", "%rdx");
-		}
-		tsc_after = rdtsc();
-		
-		printf("C: %i\n", tsc_after - tsc_before);
-		c += (tsc_after - tsc_before) / RUNS;
 	}
 
-	printf("no dependency / read dependency / read+write dependency: %i %i %i\n", a, b, c);
-
+	printf("[*] For %i iterations:\n", LOOP_MAX);
+	for (test_no = 0; tests[test_no].fun; test_no += 1) {
+		double avg, dev;
+		stddev_get(&tests[test_no].stddev, NULL, &avg, &dev);
+		printf("[=] %-25s cycles avg=%.3f dev=%.3f\n",
+		       tests[test_no].name, avg, dev);
+	}
+	return 0;
 }
