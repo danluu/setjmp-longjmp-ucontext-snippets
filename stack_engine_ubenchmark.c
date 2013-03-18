@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "rdtsc.h"
+#include "stddev.h"
 
 #define LOOP_MAX 100000000
 #define WARMUP_RUNS 2
@@ -59,12 +60,12 @@ int main() {
 	struct {
 		uint64_t (*fun)();
 		char *name;
-		uint64_t t;
+		struct stddev stddev;
 	} tests[] = {
-		{test_nodep, "no dependency", 0},
-		{test_rodep, "read dependency", 0},
-		{test_rwdep, "read+write dependency", 0},
-		{NULL, NULL, 0}
+		{test_nodep, "no dependency", INIT_STDDEV},
+		{test_rodep, "read dependency", INIT_STDDEV},
+		{test_rwdep, "read+write dependency", INIT_STDDEV},
+		{NULL, NULL, INIT_STDDEV}
 	};
 
 	printf("[*] Warming up the code\n");
@@ -78,15 +79,16 @@ int main() {
 		printf("[ ] run %i/%i\n", run_no+1, RUNS);
 		for (test_no = 0; tests[test_no].fun; test_no += 1) {
 			uint64_t t = tests[test_no].fun();
-			tests[test_no].t += t;
+			stddev_add(&tests[test_no].stddev, t);
 		}
 	}
 
+	printf("[*] For %i iterations:\n", LOOP_MAX);
 	for (test_no = 0; tests[test_no].fun; test_no += 1) {
-		printf("[=] %-25s %llu\n",
-		       tests[test_no].name,
-		       tests[test_no].t
-			);
+		double avg, dev;
+		stddev_get(&tests[test_no].stddev, NULL, &avg, &dev);
+		printf("[=] %-25s cycles avg=%.3f dev=%.3f\n",
+		       tests[test_no].name, avg, dev);
 	}
 	return 0;
 }
