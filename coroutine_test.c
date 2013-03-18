@@ -20,11 +20,11 @@ int main()
       printf("main: coro_spawn %d\n", pids[p]);
     }
   assert(coro_pid == 0);
-  for (i = 0; i < 3; i++)
+  for (p = 0; p < 10; p++)
     {
-      for (p = 0; p < 10; p++)
+      while (coro_runnable(pids[p]))
         {
-          printf("main: yielding %d (i = %d)\n", pids[p], i);
+          printf("main: yielding %d\n", pids[p]);
           coro_yield(pids[p]);
         }
     }

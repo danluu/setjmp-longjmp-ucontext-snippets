@@ -21,6 +21,7 @@ void coro_yield(int pid)
       // before you do a longjmp, set current pid to new one
       coro_pid = pid;
       longjmp(bufs[pid], 1);
+      assert(0);
     }
   else
     {
@@ -29,6 +30,11 @@ void coro_yield(int pid)
       coro_pid = saved_coro_pid;
       return; // keep doing what we were doing!
     }
+}
+
+int coro_runnable(int pid)
+{
+  return used_pids[pid];
 }
  
 coro_callback spawned_fun;
