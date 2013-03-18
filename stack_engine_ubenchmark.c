@@ -37,10 +37,10 @@ int main(void) {
 			asm volatile ("push %%rax;"
 										"mov %%rbx, %%rcx;"
 										"mov %%rbx, %%rcx;"
-										"pop %%rax;"
+										"pop %%rdx;"
 										:
 										:
-										: "%rax", "%rcx");
+										: "%rax", "%rcx", "%rdx");
 		}
 		tsc_after = rdtsc();
 		a += (tsc_after - tsc_before) / RUNS;
@@ -51,10 +51,10 @@ int main(void) {
 			asm volatile ("push %%rax;"
 										"mov %%rsp, %%rcx;"
 										"mov %%rsp, %%rcx;"
-										"pop %%rax;"
+										"pop %%rdx;"
 										:
 										:
-										: "%rax", "%rcx");
+										: "%rax", "%rcx", "%rdx");
 		}
 		tsc_after = rdtsc();
 		
@@ -66,10 +66,10 @@ int main(void) {
 			asm volatile ("push %%rax;"
 										"mov %%rsp, %%rcx;"
 										"mov %%rcx, %%rsp;"
-										"pop %%rax;"
+										"pop %%rdx;"
 										:
 										:
-										: "%rax", "%rcx");
+										: "%rax", "%rcx", "%rdx");
 		}
 		tsc_after = rdtsc();
 		
