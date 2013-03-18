@@ -8,8 +8,10 @@
 #include "coroutines.h"
 
 int coro_pid;
+int coro_max;
   
 jmp_buf* bufs;
+int* used_pids;
  
 void coro_yield(int pid)
 {
@@ -33,12 +35,19 @@ coro_callback spawned_fun;
  
 int coro_spawn(coro_callback f)
 {
-  // funky off by one stuff here maybe
-  static int pid_counter = 0;
-  pid_counter++;
-  spawned_fun = f;
-  coro_yield(pid_counter);
-  return pid_counter;
+  int pid;
+  for (pid = 0; pid < coro_max; pid++)
+    {
+    if (used_pids[pid] == 0)
+      {
+        used_pids[pid] = 1;
+        spawned_fun = f;
+        coro_yield(pid);
+        return pid;        
+      }
+  }
+  assert(0);
+  return 0;
 }
 
 // have never exit so we get a pristine stack for our coroutines
@@ -61,8 +70,17 @@ static void grow_stack(int n, int num_coros)
   else
     {
       // how does spawn/fork work?
-      spawned_fun();
-      assert(0);
+      while(1)
+        {
+          assert(spawned_fun);
+          coro_callback f = spawned_fun;
+          spawned_fun = NULL;
+
+          assert(n == coro_pid);
+          f();
+          used_pids[n] = 0;
+          coro_yield(0);
+        }
     }
 }
  
@@ -72,8 +90,12 @@ void coro_allocate(int num_coros)
   memset(big_array, 0, sizeof(big_array));
 
   // want n slots + slot '0' = num_coros + 1
-  bufs = malloc(sizeof(jmp_buf) * (num_coros + 1));
+  coro_max = num_coros + 1;
+  bufs = malloc(sizeof(jmp_buf) * (coro_max));
+  used_pids = calloc(coro_max, sizeof(int));
+  used_pids[0] = 1;
   coro_pid = 0;
+
   if (!setjmp(bufs[0]))
     {
       grow_stack(1, num_coros);

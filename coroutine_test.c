@@ -43,6 +43,5 @@ static void test_one()
     }
   printf("test_one(%d): done\n", coro_pid);
   coro_yield(0);
-  assert(0);
 }
 
