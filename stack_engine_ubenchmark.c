@@ -17,48 +17,56 @@
 	})
 
 
+static uint64_t test_nodep() {
+	return BENCHMARK_CODE(
+		asm volatile ("push %%rax;"
+			      "mov %%rbx, %%rcx;"
+			      "mov %%rbx, %%rcx;"
+			      "pop %%rax;"
+			      :
+			      :
+			      : "%rax", "%rcx")
+			);
+}
+
+static uint64_t test_rodep() {
+	return BENCHMARK_CODE(
+		asm volatile ("push %%rax;"
+			      "mov %%rsp, %%rcx;"
+			      "mov %%rsp, %%rcx;"
+			      "pop %%rax;"
+			      :
+			      :
+			      : "%rax", "%rcx")
+		);
+}
+
+static uint64_t test_rwdep() {
+	return  BENCHMARK_CODE(
+		asm volatile ("push %%rax;"
+			      "mov %%rsp, %%rcx;"
+			      "mov %%rcx, %%rsp;"
+			      "pop %%rax;"
+			      :
+			      :
+			      : "%rax", "%rcx")
+		);
+}
+
 int main() {
 	int j;
 	uint64_t a = 0, b = 0, c = 0, t;
 
 	for (j = 0; j < RUNS; ++j) {
-		t = BENCHMARK_CODE(
-			asm volatile ("push %%rax;"
-				      "mov %%rbx, %%rcx;"
-				      "mov %%rbx, %%rcx;"
-				      "pop %%rax;"
-				      :
-				      :
-				      : "%rax", "%rcx")
-			);
-
+		t = test_nodep();
 		a += t / RUNS;
 		printf("A: %llu\n", t);
 
-
-		t = BENCHMARK_CODE(
-			asm volatile ("push %%rax;"
-				      "mov %%rsp, %%rcx;"
-				      "mov %%rsp, %%rcx;"
-				      "pop %%rax;"
-				      :
-				      :
-				      : "%rax", "%rcx")
-			);
-
-		printf("B: %llu\n", t);
+		t = test_rodep();
 		b += t / RUNS;
+		printf("B: %llu\n", t);
 
-		t = BENCHMARK_CODE(
-			asm volatile ("push %%rax;"
-				      "mov %%rsp, %%rcx;"
-				      "mov %%rcx, %%rsp;"
-				      "pop %%rax;"
-				      :
-				      :
-				      : "%rax", "%rcx")
-			);
-
+		t = test_rwdep();
 		c += t / RUNS;
 		printf("C: %llu\n", t);
 	}
