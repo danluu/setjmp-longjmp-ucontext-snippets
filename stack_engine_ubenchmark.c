@@ -4,59 +4,63 @@
 #define LOOP_MAX 100000000
 #define RUNS 10
 
+#define BENCHMARK_CODE(code)			\
+	({					\
+	uint64_t tsc_before, tsc_after;		\
+	int i;					\
+	RDTSC_START(tsc_before);		\
+	for(i = 0; i < LOOP_MAX; ++i){		\
+		code;				\
+			}			\
+	RDTSC_STOP(tsc_after);			\
+	(tsc_after - tsc_before);		\
+	})
 
 
 int main() {
-	int i,j = 0;
-	uint64_t tsc_before, tsc_after;
-	uint64_t a = 0, b = 0, c = 0;
+	int j;
+	uint64_t a = 0, b = 0, c = 0, t;
 
-
-	for(j = 0; j < RUNS; ++j){
-
-		RDTSC_START(tsc_before);
-		for(i = 0; i < LOOP_MAX; ++i){
+	for (j = 0; j < RUNS; ++j) {
+		t = BENCHMARK_CODE(
 			asm volatile ("push %%rax;"
 				      "mov %%rbx, %%rcx;"
 				      "mov %%rbx, %%rcx;"
 				      "pop %%rax;"
 				      :
 				      :
-				      : "%rax", "%rcx");
-		}
-		RDTSC_STOP(tsc_after);
-		a += (tsc_after - tsc_before) / RUNS;
-		printf("A: %llu\n", tsc_after - tsc_before);
+				      : "%rax", "%rcx")
+			);
 
-		RDTSC_START(tsc_before);
-		for(i = 0; i < LOOP_MAX; ++i){
+		a += t / RUNS;
+		printf("A: %llu\n", t);
+
+
+		t = BENCHMARK_CODE(
 			asm volatile ("push %%rax;"
 				      "mov %%rsp, %%rcx;"
 				      "mov %%rsp, %%rcx;"
 				      "pop %%rax;"
 				      :
 				      :
-				      : "%rax", "%rcx");
-		}
-		RDTSC_STOP(tsc_after);
+				      : "%rax", "%rcx")
+			);
 
-		printf("B: %llu\n", tsc_after - tsc_before);
-		b += (tsc_after - tsc_before) / RUNS;
+		printf("B: %llu\n", t);
+		b += t / RUNS;
 
-		RDTSC_START(tsc_before);
-		for(i = 0; i < LOOP_MAX; ++i){
+		t = BENCHMARK_CODE(
 			asm volatile ("push %%rax;"
 				      "mov %%rsp, %%rcx;"
 				      "mov %%rcx, %%rsp;"
 				      "pop %%rax;"
 				      :
 				      :
-				      : "%rax", "%rcx");
-		}
-		RDTSC_STOP(tsc_after);
+				      : "%rax", "%rcx")
+			);
 
-		printf("C: %llu\n", tsc_after - tsc_before);
-		c += (tsc_after - tsc_before) / RUNS;
+		c += t / RUNS;
+		printf("C: %llu\n", t);
 	}
 
 	printf("no dependency / read dependency / read+write dependency: "
