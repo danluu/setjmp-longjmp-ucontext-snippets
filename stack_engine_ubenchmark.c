@@ -5,11 +5,11 @@
 #define RUNS 10
 
 
-int main(void) {
-	int i,j = 0;
-	int tsc_before, tsc_after;
-	int a, b, c;
 
+int main() {
+	int i,j = 0;
+	uint64_t tsc_before, tsc_after;
+	uint64_t a = 0, b = 0, c = 0;
 
 
 	for(j = 0; j < RUNS; ++j){
@@ -26,7 +26,7 @@ int main(void) {
 		}
 		RDTSC_STOP(tsc_after);
 		a += (tsc_after - tsc_before) / RUNS;
-		printf("A: %i\n", tsc_after - tsc_before);
+		printf("A: %llu\n", tsc_after - tsc_before);
 
 		RDTSC_START(tsc_before);
 		for(i = 0; i < LOOP_MAX; ++i){
@@ -40,7 +40,7 @@ int main(void) {
 		}
 		RDTSC_STOP(tsc_after);
 
-		printf("B: %i\n", tsc_after - tsc_before);
+		printf("B: %llu\n", tsc_after - tsc_before);
 		b += (tsc_after - tsc_before) / RUNS;
 
 		RDTSC_START(tsc_before);
@@ -55,10 +55,12 @@ int main(void) {
 		}
 		RDTSC_STOP(tsc_after);
 
-		printf("C: %i\n", tsc_after - tsc_before);
+		printf("C: %llu\n", tsc_after - tsc_before);
 		c += (tsc_after - tsc_before) / RUNS;
 	}
 
-	printf("no dependency / read dependency / read+write dependency: %i %i %i\n", a, b, c);
+	printf("no dependency / read dependency / read+write dependency: "
+	       "%llu %llu %llu\n", a, b, c);
 
+	return 0;
 }
