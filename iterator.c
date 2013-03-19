@@ -64,11 +64,9 @@ int main(void){
 	int lc_low = (long)(&loop_context) >> 32;
 	int mc2_high = (int)(&main_context2);
 	int mc2_low = (long)(&main_context2) >> 32;
-	int i_high = (int)(&i_from_iterator);
-	int i_low = (long)(&i_from_iterator) >> 32;
 	printf("high%i:low%i\n",lc_high, lc_low);
 
-	makecontext(&loop_context, (void (*)(void)) loop, 6, lc_high, lc_low, mc2_high, mc2_low, i_high, i_low);
+	makecontext(&loop_context, (void (*)(void)) loop, 5, lc_high, lc_low, mc2_high, mc2_low, &i_from_iterator);
 #else
 	makecontext(&loop_context, (void (*)(void)) loop, 3, &loop_context, &main_context2, &i_from_iterator);
 #endif

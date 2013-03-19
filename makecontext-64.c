@@ -8,6 +8,7 @@ void
 assign(long a, int *b)
 {
 	*b = (int)a;
+	printf("inside assign\n");
 }
 
 int
