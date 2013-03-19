@@ -9,10 +9,10 @@
 
 int coro_pid;
 int coro_max;
-  
+
 jmp_buf* bufs;
 int* used_pids;
- 
+
 void coro_yield(int pid)
 {
   int saved_coro_pid = coro_pid;
@@ -64,14 +64,14 @@ static void grow_stack(int n, int num_coros)
 {
   char big_array[2048];
   memset(big_array, 0, sizeof(big_array));
- 
+
   if (n == num_coros + 1)
     {
       longjmp(bufs[0],1);
       assert(0);
       return;
     }
- 
+
   if (!setjmp(bufs[n]))
     {
       grow_stack(n + 1, num_coros);
