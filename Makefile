@@ -1,6 +1,10 @@
 CC=gcc
 
-.PHONY: test coroutine channel
+.PHONY: test coroutine channel iterator setjmp exception coop
+
+iterator:
+	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		iterator.c -o iterator && ./iterator
 
 channel:
 	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
@@ -13,3 +17,15 @@ coroutine:
 test:
 	$(CC) -O3 -Wall -Wextra -g -ggdb \
 		stack_engine_ubenchmark.c -o test && ./test
+
+setjmp:
+	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		setjmp.c -o setjmp && ./setjmp
+
+exception:
+	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		exception.c -o exception && ./exception
+
+coop:
+	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		coop.c -o coop && ./coop
