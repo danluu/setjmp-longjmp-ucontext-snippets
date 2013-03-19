@@ -22,6 +22,7 @@ void loop(ucontext_t *loop_context,
  
 		/* Save the loop context (this point in the code) into ''loop_context'',
 		 * and switch to other_context. */
+		printf("loop: %d\n", i);
 		swapcontext(loop_context, other_context);
 	}
  
@@ -48,6 +49,7 @@ int main(void){
 	volatile int i_from_iterator;
  
 	getcontext(&loop_context);
+	printf("main: getcontext done\n");
 	/* Initialise the iterator context. uc_link points to main_context1, the
 	 * point to return to when the iterator finishes. */
 	loop_context.uc_link          = &main_context1;
@@ -64,7 +66,8 @@ int main(void){
 	int mc2_low = (long)(&main_context2) >> 32;
 	int i_high = (int)(&i_from_iterator);
 	int i_low = (long)(&i_from_iterator) >> 32;
-	printf("high%i:low%i",lc_high, lc_low);
+	printf("high%i:low%i\n",lc_high, lc_low);
+
 	makecontext(&loop_context, (void (*)(void)) loop, 6, lc_high, lc_low, mc2_high, mc2_low, i_high, i_low);
 #else
 	makecontext(&loop_context, (void (*)(void)) loop, 3, &loop_context, &main_context2, &i_from_iterator);
@@ -77,6 +80,7 @@ int main(void){
 	/* Save the current context into main_context1. When loop is finished,
 	 * control flow will return to this point. */
 	getcontext(&main_context1);
+	printf("main: getcontext(main_context1) done\n",lc_high, lc_low);
  
 	if (!iterator_finished) {
 		/* Set iterator_finished so that when the previous getcontext is
@@ -88,8 +92,9 @@ int main(void){
 			/* Save this point into main_context2 and switch into the iterator.
 			 * The first call will begin loop.  Subsequent calls will switch to
 			 * the swapcontext in loop. */
+			printf("main: about to try swapcontext\n",lc_high, lc_low);
 			swapcontext(&main_context2, &loop_context);
-			printf("%d\n", i_from_iterator);
+			printf("main: %d\n", i_from_iterator);
 		}
 	}
  
