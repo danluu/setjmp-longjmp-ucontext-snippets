@@ -5,42 +5,82 @@
 #include "coroutines.h"
 #include "channels.h"
 
-static void test_writer(void*);
+static void counter(void*);
 static void test_reader(void*);
 
 int main()
 {
   channels_allocate(10);
   printf("main: coro_allocate finished\n");
-  struct channel *ch = channel_new();
-  channels_spawn(test_writer, ch);
-  channels_spawn(test_reader, ch);
+  channels_spawn(test_reader, NULL);
   channels_scheduler();
   printf("main: finished\n");
   return 0;
 }
 
-static void test_writer(void* _ch)
+static void counter(void* _ch)
 {
   coro_yield(0);
   struct channel *ch = _ch;
-  int i = 0;
+  int i = 2;
   while (1)
     {
       channel_send(ch, i++);
     }
 }
 
-static void test_reader(void* ch)
+struct filter_params {
+  int prime;
+  struct channel *recv;
+  struct channel *send;
+};
+
+static void filter(void *_params)
+{
+  struct filter_params *params = _params;
+  int prime = params->prime;
+  struct channel *recv = params->recv;
+  struct channel *send = params->send;
+  coro_yield(0);
+  while (1)
+  {
+    int i = channel_recv(recv);
+    if (i % prime)
+    {
+      channel_send(send, i);
+    }
+  }
+}
+
+static void sieve(void *_ch)
+{
+  struct channel *primes = _ch;
+  struct channel *c = channel_new();
+  channels_spawn(counter, c);
+  while (1)
+  {
+    int p = channel_recv(c);
+    channel_send(primes, p);
+    struct channel *newc = channel_new();
+    struct filter_params fp = { p, c, newc };
+    channels_spawn(filter, &fp);
+    c = newc;
+  }
+}
+
+static void test_reader(void* _)
 {
   coro_yield(0);
-  int read_val = channel_recv(ch);
-  printf("test_reader: %i\n", read_val);
+  struct channel *primes = channel_new();
+  channels_spawn(sieve, primes);
 
-  read_val = channel_recv(ch);
-  printf("test_reader: %i\n", read_val);
-
-  read_val = channel_recv(ch);
-  printf("test_reader: %i\n", read_val);
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
+  printf("%d\n", channel_recv(primes));
 }
 

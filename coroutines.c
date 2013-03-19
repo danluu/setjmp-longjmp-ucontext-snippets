@@ -9,10 +9,12 @@
 
 int coro_pid;
 int coro_max;
-  
+
 jmp_buf* bufs;
 int* used_pids;
- 
+
+#define STACK_SIZE 0x1000
+
 void coro_yield(int pid)
 {
   int saved_coro_pid = coro_pid;
@@ -62,18 +64,19 @@ int coro_spawn(coro_callback f, void* user_state)
 // have never exit so we get a pristine stack for our coroutines
 static void grow_stack(int n, int num_coros)
 {
-  char big_array[2048];
-  memset(big_array, 0, sizeof(big_array));
- 
   if (n == num_coros + 1)
     {
       longjmp(bufs[0],1);
       assert(0);
       return;
     }
- 
+
   if (!setjmp(bufs[n]))
     {
+      char *big_array;
+      big_array = alloca(STACK_SIZE);
+      asm volatile("" :: "m" (big_array));
+
       grow_stack(n + 1, num_coros);
     }
   else
@@ -92,11 +95,12 @@ static void grow_stack(int n, int num_coros)
         }
     }
 }
- 
+
 void coro_allocate(int num_coros)
 {
-  char big_array[2048];
-  memset(big_array, 0, sizeof(big_array));
+  char *big_array;
+  big_array = alloca(STACK_SIZE);
+  asm volatile("" :: "m" (big_array));
 
   // want n slots + slot '0' = num_coros + 1
   coro_max = num_coros + 1;
