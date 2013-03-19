@@ -75,7 +75,7 @@ static void grow_stack(int n, int num_coros)
     {
       char *big_array;
       big_array = alloca(STACK_SIZE);
-      big_array[0] = big_array[STACK_SIZE-1] = 0xFF;
+      asm volatile("" :: "m" (big_array));
 
       grow_stack(n + 1, num_coros);
     }
@@ -95,13 +95,12 @@ static void grow_stack(int n, int num_coros)
         }
     }
 }
- 
+
 void coro_allocate(int num_coros)
 {
-  char big_array[STACK_SIZE];
-  /* Touch big_array twice to stop gcc from complaininig from being
-   * set but not used. */
-  big_array[0] = big_array[STACK_SIZE-1] = 0xFF;
+  char *big_array;
+  big_array = alloca(STACK_SIZE);
+  asm volatile("" :: "m" (big_array));
 
   // want n slots + slot '0' = num_coros + 1
   coro_max = num_coros + 1;
