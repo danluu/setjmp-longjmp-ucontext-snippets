@@ -57,8 +57,19 @@ int main(void){
 	/* Fill in loop_context so that it makes swapcontext start loop. The
 	 * (void (*)(void)) typecast is to avoid a compiler warning but it is
 	 * not relevant to the behaviour of the function. */
-	makecontext(&loop_context, (void (*)(void)) loop,
-							3, &loop_context, &main_context2, &i_from_iterator);
+#if defined(__x86_64__)
+	int lc_high = (int)(&loop_context);
+	int lc_low = (long)(&loop_context) >> 32;
+	int mc2_high = (int)(&main_context2);
+	int mc2_low = (long)(&main_context2) >> 32;
+	int i_high = (int)(&i_from_iterator);
+	int i_low = (long)(&i_from_iterator) >> 32;
+	printf("high%i:low%i",lc_high, lc_low);
+	makecontext(&loop_context, (void (*)(void)) loop, 6, lc_high, lc_low, mc2_high, mc2_low, i_high, i_low);
+#else
+	makecontext(&loop_context, (void (*)(void)) loop, 3, &loop_context, &main_context2, &i_from_iterator);
+#endif
+
  
 	/* Clear the finished flag. */      
 	iterator_finished = 0;
