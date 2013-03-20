@@ -1,10 +1,6 @@
 CC=gcc
 
-.PHONY: test coroutine channel iterator setjmp exception coop
-
-iterator:
-	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
-		iterator.c -o iterator && ./iterator
+.PHONY: test coroutine channel setjmp exception coop
 
 channel:
 	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
