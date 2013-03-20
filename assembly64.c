@@ -21,9 +21,9 @@ static void fun() {
 	printf("five\n");
 	simple_stack_frame_hack();
 	printf("hack\n");
-  printf("print hack\n");
-  //  simple_printing_fun();
-  printf("we made it!\n");
+	printf("print hack\n");
+	simple_printing_fun();
+	printf("we made it!\n");
 }
 
 
