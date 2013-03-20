@@ -8,8 +8,7 @@
 static void counter(void*);
 static void test_reader(void*);
 
-int main()
-{
+int main() {
   channels_allocate(10);
   printf("main: coro_allocate finished\n");
   channels_spawn(test_reader, NULL);
@@ -18,15 +17,13 @@ int main()
   return 0;
 }
 
-static void counter(void* _ch)
-{
+static void counter(void* _ch) {
   coro_yield(0);
   struct channel *ch = _ch;
   int i = 2;
-  while (1)
-    {
-      channel_send(ch, i++);
-    }
+  while (1) {
+    channel_send(ch, i++);
+  }
 }
 
 struct filter_params {
@@ -42,23 +39,19 @@ static void filter(void *_params)
   struct channel *recv = params->recv;
   struct channel *send = params->send;
   coro_yield(0);
-  while (1)
-  {
+  while (1) {
     int i = channel_recv(recv);
-    if (i % prime)
-    {
+    if (i % prime) {
       channel_send(send, i);
     }
   }
 }
 
-static void sieve(void *_ch)
-{
+static void sieve(void *_ch) {
   struct channel *primes = _ch;
   struct channel *c = channel_new();
   channels_spawn(counter, c);
-  while (1)
-  {
+  while (1) {
     int p = channel_recv(c);
     channel_send(primes, p);
     struct channel *newc = channel_new();
@@ -68,19 +61,15 @@ static void sieve(void *_ch)
   }
 }
 
-static void test_reader(void* _)
-{
+static void test_reader(void* _) {
+  int i = 0;
+
   coro_yield(0);
   struct channel *primes = channel_new();
   channels_spawn(sieve, primes);
 
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
-  printf("%d\n", channel_recv(primes));
+  for(i = 0; i < 8; i++) {
+    printf("%d\n", channel_recv(primes));
+  }
 }
 
