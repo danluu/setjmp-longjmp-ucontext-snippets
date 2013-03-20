@@ -1,6 +1,10 @@
 CC=gcc
 
-.PHONY: test coroutine channel setjmp exception coop heapros
+.PHONY: test coroutine channel setjmp exception coop heapros assembly
+
+assembly:
+	$(CC) -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		assembly.c  assembly_stuff.S -o assembly && ./assembly
 
 heapros:
 	$(CC) -Wall -Wextra -Wno-unused-parameter -g -ggdb \
