@@ -6,14 +6,12 @@
 #include "channels.h"
 
 static void counter(void*);
-static void test_reader(void*);
+static void print_primes(void*);
 
 int main() {
   channels_allocate(10);
-  printf("main: coro_allocate finished\n");
-  channels_spawn(test_reader, NULL);
+  channels_spawn(print_primes, NULL);
   channels_scheduler();
-  printf("main: finished\n");
   return 0;
 }
 
@@ -61,7 +59,7 @@ static void sieve(void *_ch) {
   }
 }
 
-static void test_reader(void* _) {
+static void print_primes(void* _) {
   int i = 0;
 
   coro_yield(0);
