@@ -55,19 +55,30 @@ static void scheduler(coroutine_cb coro)
   {
     coro_pid = max_pid++;
     printf("about to run coro %d...\n", coro_pid);
+    char *buf = alloca(0x1000);
+    asm volatile("" :: "m" (buf));
     scheduler_next_coro();
     assert(0);
   }
   else
   {
-    printf("jumped back to scheduler...\n");
+    printf("jumped back to scheduler (pid --> %d) (coro_pid --> %d)...\n", value, coro_pid);
     // restore coroutine marked by value (pid)
-    int pid = value;
-    int stack_sz = coroutines[pid].stack_sz;
-    coro_pid = pid;
-    memcpy((char *)scheduler_rbp - stack_sz,
-           coroutines[pid].stack,
-           stack_sz);
+    coro_pid = value;
+
+    // make them definitely not on the stack
+    static int i;
+    static int stack_sz; 
+    stack_sz = coroutines[coro_pid].stack_sz;
+    static char *d; 
+    d = (char *)scheduler_rbp - stack_sz;
+    static char *s; 
+    s = (char *)coroutines[coro_pid].stack;
+    for (i = 0; i < stack_sz; i++)
+    {
+      *d++ = *s++;
+    }
+
     longjmp(coroutines[coro_pid].jmp, 1);
     assert(0);
   }
