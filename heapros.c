@@ -8,6 +8,7 @@ typedef void (*coroutine_cb)();
 
 static void f();
 static void g();
+static void h();
 static void scheduler(coroutine_cb);
 static int spawn(coroutine_cb);
 static void yield(int);
@@ -32,6 +33,8 @@ static void f()
   printf("Hi, I'm f (local_var --> %d)!\n", local_var);
   spawn(g);
   printf("f just spawned g (local_var --> %d)\n", local_var);
+  spawn(h);
+  printf("f just spawned h (local_var --> %d)\n", local_var);
   exit(0);
 }
 
@@ -40,6 +43,13 @@ static void g()
   printf("Hi, I'm g!\n");
   yield(1);
 }
+
+static void h()
+{
+  printf("Hi, I'm h!\n");
+  yield(1);
+}
+
 
 static void scheduler(coroutine_cb coro)
 {
