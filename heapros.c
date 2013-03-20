@@ -51,6 +51,7 @@ static void h()
 {
   printf("Hi, I'm h!\n");
   yield(1);
+  printf("Finishing h\n");
 }
 
 
