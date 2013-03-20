@@ -1,0 +1,3 @@
+[submodule "libtask"]
+	path = libtask
+	url = git://github.com/majek/libtask.git
