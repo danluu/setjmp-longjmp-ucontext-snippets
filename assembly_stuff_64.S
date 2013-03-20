@@ -16,51 +16,52 @@ ENTRY(simple):
         ret
 
 ENTRY(simple_no_ret):
-        pop %eax
-        jmp *%eax
+        pop %rax
+        jmp *%rax
 
 
 ENTRY(simple_stack_frame):
-        push %ebp
-        mov %esp, %ebp
-        sub $10, %esp
+        push %rbp
+        mov %rsp, %rbp
+        sub $10, %rsp
 
-        mov %ebp, %esp
-        pop %ebp
+        mov %rbp, %rsp
+        pop %rbp
         ret
 
 
 ENTRY(simple_stack_frame_leave):
-        push %ebp
-        mov %esp, %ebp
-        sub $10, %esp
+        push %rbp
+        mov %rsp, %rbp
+        sub $10, %rsp
 
         leave
         ret
 
 
 ENTRY(simple_stack_frame_hack):
-        push %ebp
-        mov %esp, %ebp
-        sub $10, %esp
+        push %rbp
+        mov %rsp, %rbp
+        sub $10, %rsp
 
         leave
         ret
         // // restore ebp
-        // mov (%ebp), %ebp
+        // mov (%rbp), %rbp
 
         // //restore esp (move to old ebp, then fix it)
-        // mov %ebp, %esp
-        // add $4, %esp
+        // mov %rbp, %rsp
+        // add $4, %rsp
 
         // ret
-        //pop %eax
-        //jmp *%eax
+        //pop %rax
+        //jmp *%rax
 
+	/*
 ENTRY(simple_printing_fun):
-        push %ebp
-        mov %esp, %ebp
-        sub $10, %esp
+        push %rbp
+        mov %rsp, %rbp
+        sub $10, %rsp
 
         push $STRING
         call _printf
@@ -73,3 +74,4 @@ ENTRY(simple_printing_fun):
         leave
         ret
 
+*/
