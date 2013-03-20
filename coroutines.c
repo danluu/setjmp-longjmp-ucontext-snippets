@@ -15,89 +15,74 @@ int* used_pids;
 
 #define STACK_SIZE 0x1000
 
-void coro_yield(int pid)
-{
+void coro_yield(int pid) {
   int saved_coro_pid = coro_pid;
-  if (!setjmp(bufs[coro_pid]))
-    {
-      // before you do a longjmp, set current pid to new one
-      coro_pid = pid;
-      longjmp(bufs[pid], 1);
-      assert(0);
-    }
-  else
-    {
-      // if we return from setjmp, reset the coro_pid 
-      // to what it used to be
-      coro_pid = saved_coro_pid;
-      return; // keep doing what we were doing!
-    }
+  if (!setjmp(bufs[coro_pid])) {
+    // before you do a longjmp, set current pid to new one
+    coro_pid = pid;
+    longjmp(bufs[pid], 1);
+    assert(0);
+  } else {
+    // if we return from setjmp, reset the coro_pid 
+    // to what it used to be
+    coro_pid = saved_coro_pid;
+    return; // keep doing what we were doing!
+  }
 }
 
-int coro_runnable(int pid)
-{
+int coro_runnable(int pid) {
   return used_pids[pid];
 }
  
 coro_callback spawned_fun;
 void* spawned_user_state;
  
-int coro_spawn(coro_callback f, void* user_state)
-{
+int coro_spawn(coro_callback f, void* user_state) {
   int pid;
   spawned_fun = f;
   spawned_user_state = user_state;
 
-  for (pid = 0; pid < coro_max; pid++)
-    {
-    if (used_pids[pid] == 0)
-      {
-        used_pids[pid] = 1;
-        coro_yield(pid);
-        return pid;        
-      }
+  for (pid = 0; pid < coro_max; pid++) {
+    if (used_pids[pid] == 0) {
+      used_pids[pid] = 1;
+      coro_yield(pid);
+      return pid;        
+    }
   }
   assert(0);
   return 0;
 }
 
 // have never exit so we get a pristine stack for our coroutines
-static void grow_stack(int n, int num_coros)
-{
-  if (n == num_coros + 1)
-    {
-      longjmp(bufs[0],1);
-      assert(0);
-      return;
-    }
+static void grow_stack(int n, int num_coros) {
+  if (n == num_coros + 1) {
+    longjmp(bufs[0],1);
+    assert(0);
+    return;
+  }
 
-  if (!setjmp(bufs[n]))
-    {
-      char *big_array;
-      big_array = alloca(STACK_SIZE);
-      asm volatile("" :: "m" (big_array));
+  if (!setjmp(bufs[n])) {
+    char *big_array;
+    big_array = alloca(STACK_SIZE);
+    asm volatile("" :: "m" (big_array));
 
-      grow_stack(n + 1, num_coros);
-    }
-  else
-    {
-      // how does spawn/fork work?
-      while(1)
-        {
-          assert(spawned_fun);
-          coro_callback f = spawned_fun;
-          spawned_fun = NULL;
+    grow_stack(n + 1, num_coros);
+  } else {
+    // how does spawn/fork work?
+    while(1) {
+      assert(spawned_fun);
+      coro_callback f = spawned_fun;
+      spawned_fun = NULL;
 
-          assert(n == coro_pid);
-          f(spawned_user_state);
-          used_pids[n] = 0;
-          coro_yield(0);
-        }
+      assert(n == coro_pid);
+      f(spawned_user_state);
+      used_pids[n] = 0;
+      coro_yield(0);
     }
+  }
 }
 
-void coro_allocate(int num_coros)
-{
+void coro_allocate(int num_coros) {
   char *big_array;
   big_array = alloca(STACK_SIZE);
   asm volatile("" :: "m" (big_array));
@@ -109,13 +94,10 @@ void coro_allocate(int num_coros)
   used_pids[0] = 1;
   coro_pid = 0;
 
-  if (!setjmp(bufs[0]))
-    {
-      grow_stack(1, num_coros);
-      assert(0);
-    }
-  else
-    {
-      return;
-    }
+  if (!setjmp(bufs[0])) {
+    grow_stack(1, num_coros);
+    assert(0);
+  } else {
+    return;
+  }
 }

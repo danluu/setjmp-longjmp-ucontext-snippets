@@ -1,10 +1,10 @@
 CC=gcc
 
-.PHONY: test coroutine channel iterator setjmp exception coop
+.PHONY: test coroutine channel setjmp exception coop heapros
 
-iterator:
-	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
-		iterator.c -o iterator && ./iterator
+heapros:
+	$(CC) -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+		heapros.c -o heapros && ./heapros
 
 channel:
 	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \
