@@ -11,18 +11,21 @@ int main() {
   printf("main: coro_allocate finished\n");
   int p;
   int pids[10];
+  int valid_pid_count;
 
   for (p = 0; p < 10; p++) {
     pids[p] = coro_spawn(test_one, NULL);
     printf("main: coro_spawn %d\n", pids[p]);
   }
   assert(coro_pid == 0);
-  for (p = 0; p < 10; p++) {
-    while (coro_runnable(pids[p])) {
+  do {
+    valid_pid_count = 0;
+    for (p = 0; p < 10; p++) {    
       printf("main: yielding %d\n", pids[p]);
       coro_yield(pids[p]);
+      valid_pid_count += coro_runnable(pids[p]);
     }
-  }
+  } while (valid_pid_count > 0);
   printf("main: finished\n");
   return 0;
 }
