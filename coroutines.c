@@ -95,6 +95,12 @@ void coro_allocate(int num_coros) {
   coro_pid = 0;
 
   if (!setjmp(bufs[0])) {
+    // we only need the extra space here if we're going to
+    // call functions from coro_allocate
+    char *big_array;
+    big_array = alloca(STACK_SIZE);
+    asm volatile("" :: "m" (big_array));
+
     grow_stack(1, num_coros);
     assert(0);
   } else {
