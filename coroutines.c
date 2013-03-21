@@ -83,10 +83,6 @@ static void grow_stack(int n, int num_coros) {
 }
 
 void coro_allocate(int num_coros) {
-  char *big_array;
-  big_array = alloca(STACK_SIZE);
-  asm volatile("" :: "m" (big_array));
-
   // want n slots + slot '0' = num_coros + 1
   coro_max = num_coros + 1;
   bufs = malloc(sizeof(jmp_buf) * (coro_max));
