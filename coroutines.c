@@ -68,7 +68,9 @@ static void grow_stack(int n, int num_coros) {
 
     grow_stack(n + 1, num_coros);
   } else {
-    // how does spawn/fork work?
+    if (n == 0) {
+      return; //came from coro_allocate; return back there
+    } 
     while(1) {
       assert(spawned_fun);
       coro_callback f = spawned_fun;
@@ -90,16 +92,5 @@ void coro_allocate(int num_coros) {
   used_pids[0] = 1;
   coro_pid = 0;
 
-  if (!setjmp(bufs[0])) {
-    // we only need the extra space here if we're going to
-    // call functions from coro_allocate
-    char *big_array;
-    big_array = alloca(STACK_SIZE);
-    asm volatile("" :: "m" (big_array));
-
-    grow_stack(1, num_coros);
-    assert(0);
-  } else {
-    return;
-  }
+  grow_stack(0, num_coros);
 }
