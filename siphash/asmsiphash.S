@@ -1,11 +1,11 @@
 
 .align 16, 0x00
 INITV0V1:
-        .ascii "modnaroduespemos"
+        .ascii "uespemosmodnarod"
         # .ascii "somepseudorandom"
         # .octa 0x736f6d6570736575646f72616e646f6d
 INITV2V3:
-        .ascii "setybdetarenegyl"
+        .ascii "arenegylsetybdet"
         # .ascii "lygeneratedbytes"
         # .octa 0x6c7967656e6572617465646279746573
 
@@ -120,16 +120,18 @@ _siphash24_asm:
          */
         mov 0x10(%ebp), %eax
         movdqu (%eax), %xmm4	# load 128 key k0, k1
+        pshufd $0x4e, %xmm4, %xmm4
 
         /* Preamble */
         movdqa INITV0V1-.l0(%ecx), %xmm0
         pxor %xmm4, %xmm0       # v0^k0, v1^k1
         movdqa INITV2V3-.l0(%ecx), %xmm1
         pxor %xmm4, %xmm1       # v2^k0, v3^k1
-        pshufd $0x4e, %xmm0, %xmm0
-        pshufd $0x4e, %xmm1, %xmm1
 
         /* Compression rounds */
+        
+
+        /* Padding round */
 
         /* Finalization */
         mov $0x00, %eax
