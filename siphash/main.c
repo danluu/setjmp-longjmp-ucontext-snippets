@@ -26,8 +26,10 @@ int main() {
 	char key[16] = {0};
 	uint64_t out1, out2;
 
-	char *vector = "";
+	char *vector = "abcdefgh";
 	int vector_sz = strlen(vector);
+
+//	char *vector2 = "hgfedcba";
 
 	/* sanity check */
 	out1 = siphash24(vector, vector_sz, key);
@@ -102,14 +104,14 @@ int main() {
 	int noop_min, min, max;
 	double avg, dev, a, b;
 	stddev_get(&noop, NULL, &noop_min, &max, &avg, &dev);
-	printf("noop round   min/max=%i/%i   avg=%.3f  +/- %.3f\n",
+	printf("noop round   min/max=%3i/%3i   avg=%7.3f  +/- %.3f\n",
 	       noop_min, max, avg, dev);
 	stddev_get(&native, NULL, &min, &max, &avg, &dev);
-	printf("native       min/max=%i/%i   avg=%.3f  +/- %.3f\n",
+	printf("native       min/max=%3i/%3i   avg=%7.3f  +/- %.3f\n",
 	       min-noop_min, max-noop_min, avg-noop_min, dev);
 	a = min-noop_min;
 	stddev_get(&sse, NULL, &min, &max, &avg, &dev);
-	printf("sse          min/max=%i/%i   avg=%.3f  +/- %.3f\n",
+	printf("sse          min/max=%3i/%3i   avg=%7.3f  +/- %.3f\n",
 	       min-noop_min, max-noop_min, avg-noop_min, dev);
 	b = min-noop_min;
 	printf("gain: %.3f%%\n", (1. - b/a)*100.);

@@ -113,9 +113,9 @@ _siphash24_asm:
         call .l0
 .l0:    pop %ecx
 
-        /* 8(%ebp) -> const void *src
-         * 12(%ebp) -> unsigned long src_sz
-         * 16(%ebp) -> char key[16];
+        /* 0x08(%ebp) -> const void *src
+         * 0x0c(%ebp) -> unsigned long src_sz
+         * 0x10(%ebp) -> char key[16];
          * neither src and key don't need to be aligned
          */
         mov 0x10(%ebp), %eax
@@ -128,27 +128,47 @@ _siphash24_asm:
         movdqa INITV2V3-.l0(%ecx), %xmm1
         pxor %xmm4, %xmm1       # v2^k0, v3^k1
 
-        /* Compression rounds */
-        
-
-        /* Padding round */
-
-        /* Finalization */
-        mov $0x00, %eax
-        movd %eax, %xmm4
-        pshufd $0x45, %xmm4, %xmm4
-
-        pxor %xmm4, %xmm1       # v3^b
+        mov 0x08(%ebp), %edx    # edx = src
+        mov 0x0c(%ebp), %ecx    # eax = src_sz
+        mov %ecx, %eax          # ecx = src_sz
 
         ROTATE(%xmm0, %xmm1, %xmm3)
+
+        /* Compression rounds */
+        cmp $8, %ecx
+        jl srcsz_lt_8
+srcsz_gte_8:
+        movq (%edx), %xmm6       # xmm6(lo) = m
+        add $8, %edx
+        sub $8, %ecx
+
+        pshufd $0x4e, %xmm6, %xmm7
+        pxor %xmm7, %xmm1       # v3 ^= m
+
+        DOUBLE_ROUND()
+        pxor %xmm6, %xmm0       # v0 ^= m
+
+        cmp $8, %ecx
+        jge srcsz_gte_8
+srcsz_lt_8:
+
+        /* Padding round */
+        # eax = src_sz
+        movd %eax, %xmm5
+        pslldq $15, %xmm5       # 15 bytes, 56+64 bits
+
+        // add t
+        pshufd $0x4e, %xmm5, %xmm7
+        pxor %xmm5, %xmm1       # v3^b
+
         DOUBLE_ROUND()
 
         /* load 0xff to xmm4:hi */
-        pcmpeqw %xmm4, %xmm4
-        psrlq $56, %xmm4
-        pshufd $0x45, %xmm4, %xmm4
-
-        pxor %xmm4, %xmm0       # v2^0xff
+        pcmpeqw %xmm5, %xmm5
+        psrlq $56, %xmm5
+        pshufd $0x45, %xmm5, %xmm5
+        pxor %xmm7, %xmm0       # v0 ^= b
+        pxor %xmm5, %xmm0       # v2 ^= 0xff
 
         DOUBLE_ROUND()
         DOUBLE_ROUND()
@@ -164,11 +184,10 @@ _siphash24_asm:
         leave
         ret
 
-        /*        punpckhqdq %xmm0, %xmm0
+return_xmm0_lo:
+        punpcklqdq %xmm0, %xmm0
         movq %xmm0, (%esp)
         mov 0x4(%esp), %edx
         mov 0x0(%esp), %eax
         leave
         ret
-
-*/

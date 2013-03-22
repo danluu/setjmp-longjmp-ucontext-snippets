@@ -115,10 +115,11 @@ uint64_t siphash24(const void *src, unsigned long src_sz, const char key[16]) {
 	case 1: pt[0] = m[0];
 	}
 	b |= _le64toh(t);
-	b = 0;
 
 	v3 ^= b;
+
 	DOUBLE_ROUND(v0,v1,v2,v3);
+//	printf("v0=%016llx v1=%016llx v2=%016llx v3=%016llx\n", v0, v1, v2, v3);
 	v0 ^= b; v2 ^= 0xff;
 	DOUBLE_ROUND(v0,v1,v2,v3);
 	DOUBLE_ROUND(v0,v1,v2,v3);
