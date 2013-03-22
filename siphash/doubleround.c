@@ -9,11 +9,12 @@
 #include "rdtsc.h"
 #include "stddev.h"
 
-uint64_t siphash24(const void *src, unsigned long src_sz, const char key[16]);
-uint64_t siphash24_asm(const void *src, unsigned long src_sz, const char key[16]);
+void siphash24_half_round_asm(const uint64_t in[4], uint64_t out[4]);
 
 
-#define ROUNDS 60
+void half_round(const uint64_t in[4], uint64_t out[4]);
+
+#define ROUNDS 30
 
 struct {
 	int noop;
@@ -23,25 +24,28 @@ struct {
 
 int main() {
 	int i;
-	char key[16] = {0};
-	uint64_t out1, out2;
-
-	char *vector = "";
-	int vector_sz = strlen(vector);
+	uint64_t in[4] = {1, 2, 3, 4};
+	uint64_t out1[4], out2[4];
 
 	/* sanity check */
-	out1 = siphash24(vector, vector_sz, key);
-	out2 = siphash24_asm(vector, vector_sz, key);
+	half_round(in, out1);
+	siphash24_half_round_asm(in, out2);
 
-	printf("%016llx\n", out1);
-	printf("%016llx\n", out2);
-	assert(out1 == out2);
+	printf("lo=%016llx hi=%016llx\n", out1[0], out1[1]);
+	printf("lo=%016llx hi=%016llx\n", out1[2], out1[3]);
+
+	printf("lo=%016llx hi=%016llx\n", out2[0], out2[1]);
+	printf("lo=%016llx hi=%016llx\n", out2[2], out2[3]);
+	for (i = 0; i < 4; i++) {
+		assert(out1[i] == out2[i]);
+	}
+
 
 	/* Use 100% CPU for some time to make sure the processor has
 	   time to turn off energy saving. */
-	for (i = 0; i < 20000000; i++) {
-		out1 = siphash24(vector, vector_sz, key);
-		out1 = siphash24_asm(vector, vector_sz, key);
+	for (i = 0; i < 50000000; i++) {
+		half_round(in, out1);
+		siphash24_half_round_asm(in, out1);
 	}
 
 	/* The hot section */
@@ -53,9 +57,8 @@ int main() {
 		rounds[i].d1 = 0;
 	}
 
-	out1 = siphash24(vector, vector_sz, key);
-	out1 = siphash24_asm(vector, vector_sz, key);
-
+	siphash24_half_round_asm(in, out1);
+	half_round(in, out1);
 
 	struct stddev noop = INIT_STDDEV;
 	struct stddev native = INIT_STDDEV;
@@ -68,12 +71,18 @@ int main() {
 		stddev_add(&noop, c1 - c0);
 
 		RDTSC_START(c0);
-		out1 = siphash24(vector, vector_sz, key);
+		half_round(in, out1);
+		half_round(in, out1);
+		half_round(in, out1);
+		half_round(in, out1);
 		RDTSC_STOP(c1);
 		stddev_add(&native, c1 - c0);
 
 		RDTSC_START(c0);
-		out1 = siphash24_asm(vector, vector_sz, key);
+		siphash24_half_round_asm(in, out1);
+		siphash24_half_round_asm(in, out1);
+		siphash24_half_round_asm(in, out1);
+		siphash24_half_round_asm(in, out1);
 		RDTSC_STOP(c1);
 		stddev_add(&sse, c1 - c0);
 	}
@@ -115,5 +124,3 @@ int main() {
 	printf("gain: %.3f%%\n", (1. - b/a)*100.);
 	return 0;
 }
-
-

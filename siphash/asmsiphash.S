@@ -1,9 +1,12 @@
 
 .align 16, 0x00
-INITV0V1:       .ascii "somepseudorandom"
-        #.octa 0x736f6d6570736575646f72616e646f6d
+INITV0V1:
+        .ascii "modnaroduespemos"
+        # .ascii "somepseudorandom"
+        # .octa 0x736f6d6570736575646f72616e646f6d
 INITV2V3:
-        .ascii "lygeneratedbytes"
+        .ascii "setybdetarenegyl"
+        # .ascii "lygeneratedbytes"
         # .octa 0x6c7967656e6572617465646279746573
 
 #define ROTLQ(xmm, s, xmmtmp)    \
@@ -106,6 +109,10 @@ _siphash24_asm:
         sub $0x30, %esp
         and $0xfffffff0, %esp
 
+        /* Push eip to ecx */
+        call .l0
+.l0:    pop %ecx
+
         /* 8(%ebp) -> const void *src
          * 12(%ebp) -> unsigned long src_sz
          * 16(%ebp) -> char key[16];
@@ -114,29 +121,35 @@ _siphash24_asm:
         mov 0x10(%ebp), %eax
         movdqu (%eax), %xmm4	# load 128 key k0, k1
 
-        movl $0x736f6d65, 0x00(%esp)
-        movl $0x70736575, 0x04(%esp)
-        movl $0x646f7261, 0x08(%esp)
-        movl $0x6e646f6d, 0x0c(%esp)
-        movl $0x6c796765, 0x10(%esp)
-        movl $0x6e657261, 0x14(%esp)
-        movl $0x74656462, 0x18(%esp)
-        movl $0x79746573, 0x1c(%esp)
-        /* Prologue */
-        movdqu 0x00(%esp), %xmm0	# v0, v1
-        movdqu 0x10(%esp), %xmm1	# v2, v3
+        /* Preamble */
+        movdqa INITV0V1-.l0(%ecx), %xmm0
         pxor %xmm4, %xmm0       # v0^k0, v1^k1
+        movdqa INITV2V3-.l0(%ecx), %xmm1
         pxor %xmm4, %xmm1       # v2^k0, v3^k1
+        pshufd $0x4e, %xmm0, %xmm0
+        pshufd $0x4e, %xmm1, %xmm1
 
-        /* Intermediate rounds */
+        /* Compression rounds */
 
         /* Finalization */
-        pxor %xmm2, %xmm2       # b = (0,0)
-        pxor %xmm2, %xmm1       # v3^b
+        mov $0x00, %eax
+        movd %eax, %xmm4
+        pshufd $0x45, %xmm4, %xmm4
+
+        pxor %xmm4, %xmm1       # v3^b
 
         ROTATE(%xmm0, %xmm1, %xmm3)
         DOUBLE_ROUND()
-        ROTATE(%xmm0, %xmm1, %xmm3)
+
+        /* load 0xff to xmm4:hi */
+        pcmpeqw %xmm4, %xmm4
+        psrlq $56, %xmm4
+        pshufd $0x45, %xmm4, %xmm4
+
+        pxor %xmm4, %xmm0       # v2^0xff
+
+        DOUBLE_ROUND()
+        DOUBLE_ROUND()
 
         /* Epilogue */
         pxor %xmm1, %xmm0       # xmm0 = v0^v2, v1^v3
@@ -148,3 +161,12 @@ _siphash24_asm:
         mov 0x0(%esp), %eax
         leave
         ret
+
+        /*        punpckhqdq %xmm0, %xmm0
+        movq %xmm0, (%esp)
+        mov 0x4(%esp), %edx
+        mov 0x0(%esp), %eax
+        leave
+        ret
+
+*/
