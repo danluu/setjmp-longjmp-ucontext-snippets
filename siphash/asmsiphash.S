@@ -12,19 +12,29 @@ INITV2V3:
         psrlq $64-s, xmmtmp;	\
         pxor xmmtmp, xmm
 
-#define ROTQ(xmm1, s, t, xmm2, xmm3, xmm4)      \
+#define ROTQ(xmm1, rotb, rotd, xmm2, xmm3, xmm4)      \
         /* xmm1 = b, _; xmm2 = _, d */  \
         movdqa xmm1, xmm2;              \
         /* xmm2 = d, _ */               \
         punpckhqdq xmm2, xmm2;          \
                                         \
         /* b = ROTATE(b, s) */          \
-        ROTLQ(xmm1, s, xmm3);           \
+        rotb(xmm1, xmm3);               \
         /* d = ROTATE(d, t) */          \
-        ROTLQ(xmm2, t, xmm4);           \
+        rotd(xmm2, xmm4);               \
         /* xmm2 = b, d */               \
         punpcklqdq xmm2, xmm1
 
+#define ROTLQ17(xmm, xmmtmp)    ROTLQ(xmm, 17, xmmtmp)
+#define ROTLQ21(xmm, xmmtmp)    ROTLQ(xmm, 21, xmmtmp)
+#define ROTLQ13(xmm, xmmtmp)    ROTLQ(xmm, 13, xmmtmp)
+#define ROTLQ16(xmm, xmmtmp)    \
+        pshuflw $0x93, xmm, xmm
+
+#define ROTQ1721(xmm1, xmm2, xmm3, xmm4)        \
+        ROTQ(xmm1, ROTLQ17, ROTLQ21, xmm2, xmm3, xmm4)
+#define ROTQ1316(xmm1, xmm2, xmm3, xmm4)        \
+        ROTQ(xmm1, ROTLQ13, ROTLQ16, xmm2, xmm3, xmm4)
 
         /* xmm0: a, c
          * xmm1: b, d
@@ -32,39 +42,34 @@ INITV2V3:
          * t - d's shift
          * xmm2, xmm3, xmm4: clobbered
          */
-#define HALF_ROUND(s, t)	        \
+#define HALF_ROUND(rot) 	        \
         /* xmm0 = a, c; xmm1 = b, d */	\
         /* a += b; c += d */            \
         paddq %xmm1, %xmm0;             \
-        ROTQ(%xmm1, s, t, %xmm2, %xmm3, %xmm4); \
+        rot(%xmm1, %xmm2, %xmm3, %xmm4); \
                                         \
         /* b ^= a; d ^= c */            \
         pxor %xmm0, %xmm1;              \
         /* xmm0 = c, ROTATE(a, 32) */   \
-        /* pshufd $0b 0001 1110, %xmm0, %xmm0; */ \
         pshufd $0x1E, %xmm0, %xmm0;
 
+#define ROTATE(xmm0, xmm1, xmmtmp)      \
+        /* rotate (a,b), (c,d) to (a,c), (b,d) */ \
+        movdqa xmm1, xmmtmp;            \
+        movdqa xmm0, xmm1;              \
+        punpcklqdq xmmtmp, xmm0;        \
+        punpckhqdq xmmtmp, xmm1
+
+
 #define DOUBLE_ROUND()                  \
-        /* xmm0 = a(lo), b(hi) */       \
-        /* xmm1 = c(lo), d(hi) */       \
+        /* xmm0 = a(lo), c(hi) */       \
+        /* xmm1 = b(lo), d(hi) */       \
                                         \
-        /* xmm0 = a, c; xmm1 = b, d */  \
-        movdqa %xmm1, %xmm3;            \
-        movdqa %xmm0, %xmm1;            \
-        punpcklqdq %xmm3, %xmm0;        \
-        punpckhqdq %xmm3, %xmm1;        \
-                                        \
-        HALF_ROUND(13, 16);             \
-        HALF_ROUND(17, 21);             \
-        HALF_ROUND(13, 16);             \
-        HALF_ROUND(17, 21);             \
-                                        \
-        /* xmm0 = a, c; xmm1 = b, d */  \
-        movdqa %xmm1, %xmm3;            \
-        movdqa %xmm0, %xmm2;            \
-        punpcklqdq %xmm3, %xmm0;        \
-        punpckhqdq %xmm1, %xmm2;        \
-        movdqa %xmm2, %xmm1
+        HALF_ROUND(ROTQ1316);           \
+        HALF_ROUND(ROTQ1721);           \
+        HALF_ROUND(ROTQ1316);           \
+        HALF_ROUND(ROTQ1721)
+
 
 .align 16, 0x90
 .globl siphash24_half_round_asm
@@ -72,16 +77,18 @@ INITV2V3:
 siphash24_half_round_asm:
 _siphash24_half_round_asm:
         push %ebp
-        mov %esp, %ebp
+        mov %esp,%ebp
         sub $0x30, %esp
 
         mov 0x08(%ebp), %eax
-        mov 0x0c(%ebp), %ecx
         movdqu 0x00(%eax), %xmm0
         movdqu 0x10(%eax), %xmm1
 
+        ROTATE(%xmm0, %xmm1, %xmm3)
         DOUBLE_ROUND()
+        ROTATE(%xmm0, %xmm1, %xmm3)
 
+        mov 0x0c(%ebp), %ecx
         movdqu %xmm0, 0x00(%ecx)
         movdqu %xmm1, 0x10(%ecx)
 
@@ -91,10 +98,13 @@ _siphash24_half_round_asm:
 
 .align 16, 0x90
 .globl siphash24_asm
+.globl _siphash24_asm
 siphash24_asm:
+_siphash24_asm:
         push %ebp
         mov %esp, %ebp
         sub $0x30, %esp
+        and $0xfffffff0, %esp
 
         /* 8(%ebp) -> const void *src
          * 12(%ebp) -> unsigned long src_sz
@@ -104,19 +114,29 @@ siphash24_asm:
         mov 0x10(%ebp), %eax
         movdqu (%eax), %xmm4	# load 128 key k0, k1
 
+        movl $0x736f6d65, 0x00(%esp)
+        movl $0x70736575, 0x04(%esp)
+        movl $0x646f7261, 0x08(%esp)
+        movl $0x6e646f6d, 0x0c(%esp)
+        movl $0x6c796765, 0x10(%esp)
+        movl $0x6e657261, 0x14(%esp)
+        movl $0x74656462, 0x18(%esp)
+        movl $0x79746573, 0x1c(%esp)
         /* Prologue */
-        movdqa INITV0V1, %xmm0	# v0, v1
-        movdqa INITV2V3, %xmm1	# v2, v3
+        movdqu 0x00(%esp), %xmm0	# v0, v1
+        movdqu 0x10(%esp), %xmm1	# v2, v3
         pxor %xmm4, %xmm0       # v0^k0, v1^k1
         pxor %xmm4, %xmm1       # v2^k0, v3^k1
 
         /* Intermediate rounds */
 
         /* Finalization */
-        pxor %xmm2, %xmm2       # 0x0, b = 0
+        pxor %xmm2, %xmm2       # b = (0,0)
         pxor %xmm2, %xmm1       # v3^b
 
+        ROTATE(%xmm0, %xmm1, %xmm3)
         DOUBLE_ROUND()
+        ROTATE(%xmm0, %xmm1, %xmm3)
 
         /* Epilogue */
         pxor %xmm1, %xmm0       # xmm0 = v0^v2, v1^v3
