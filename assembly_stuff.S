@@ -44,14 +44,11 @@ ENTRY(simple_stack_frame_hack):
         mov %esp, %ebp
         sub $0x10, %esp
 
-        // restore esp (move to old ebp, then fix it)
         mov %ebp, %esp
         add $4, %esp
-
-        // restore ebp
         mov (%ebp), %ebp
-
-        ret
+        pop %eax
+        jmp *%eax
 
 ENTRY(simple_printing_fun):
         push %ebp
@@ -59,12 +56,12 @@ ENTRY(simple_printing_fun):
         sub $10, %esp
 
         push $STRING
-        call _printf
+        call printf
 
         push $0x1234
         push $0x00
         push $FORMAT
-        call _printf
+        call printf
 
         leave
         ret
