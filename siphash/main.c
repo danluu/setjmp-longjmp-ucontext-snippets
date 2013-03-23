@@ -26,10 +26,9 @@ int main() {
 	char key[16] = {0};
 	uint64_t out1, out2;
 
-	char *vector = "abcdefgh";
+	// char *vector = "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh";
+	char *vector = "abcdefghi";
 	int vector_sz = strlen(vector);
-
-//	char *vector2 = "hgfedcba";
 
 	/* sanity check */
 	out1 = siphash24(vector, vector_sz, key);

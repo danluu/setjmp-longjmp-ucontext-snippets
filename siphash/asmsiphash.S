@@ -106,6 +106,9 @@ siphash24_asm:
 _siphash24_asm:
         push %ebp
         mov %esp, %ebp
+        mov %esi, -0x4(%ebp)
+        mov %edi, -0x8(%ebp)
+
         sub $0x30, %esp
         and $0xfffffff0, %esp
 
@@ -128,9 +131,13 @@ _siphash24_asm:
         movdqa INITV2V3-.l0(%ecx), %xmm1
         pxor %xmm4, %xmm1       # v2^k0, v3^k1
 
-        mov 0x08(%ebp), %edx    # edx = src
+        mov 0x08(%ebp), %esi    # esi = src
         mov 0x0c(%ebp), %ecx    # eax = src_sz
         mov %ecx, %eax          # ecx = src_sz
+        shl $24, %eax           # size in top byte of eax
+        mov %eax, 4(%esp)
+        xor %edx, %edx
+        mov %edx, 0(%esp)       # 8 bytes on stack are zeres + sz
 
         ROTATE(%xmm0, %xmm1, %xmm3)
 
@@ -138,8 +145,8 @@ _siphash24_asm:
         cmp $8, %ecx
         jl srcsz_lt_8
 srcsz_gte_8:
-        movq (%edx), %xmm6       # xmm6(lo) = m
-        add $8, %edx
+        movq (%esi), %xmm6       # xmm6(lo) = m
+        add $8, %esi
         sub $8, %ecx
 
         pshufd $0x4e, %xmm6, %xmm7
@@ -152,23 +159,28 @@ srcsz_gte_8:
         jge srcsz_gte_8
 srcsz_lt_8:
 
-        /* Padding round */
-        # eax = src_sz
-        movd %eax, %xmm5
-        pslldq $15, %xmm5       # 15 bytes, 56+64 bits
+        /* move the remainder to the stack (max 7 bytes)
+         * %ecx bytes from %esi to %edi
+         */
+        mov %esp, %edi
+        rep movsb
 
-        // add t
+
+        /* Padding round */
+        movq (%esp), %xmm5      # xmm5_lo = b
+
+        /* xmm7_hi = b */
         pshufd $0x4e, %xmm5, %xmm7
-        pxor %xmm5, %xmm1       # v3^b
+        pxor %xmm7, %xmm1       # v3^b
 
         DOUBLE_ROUND()
 
         /* load 0xff to xmm4:hi */
-        pcmpeqw %xmm5, %xmm5
-        psrlq $56, %xmm5
-        pshufd $0x45, %xmm5, %xmm5
-        pxor %xmm7, %xmm0       # v0 ^= b
-        pxor %xmm5, %xmm0       # v2 ^= 0xff
+        pcmpeqw %xmm7, %xmm7
+        psrlq $56, %xmm7
+        pshufd $0x45, %xmm7, %xmm7
+        pxor %xmm7, %xmm0       # v2 ^= 0xff
+        pxor %xmm5, %xmm0       # v0 ^= 0xb
 
         DOUBLE_ROUND()
         DOUBLE_ROUND()
@@ -181,13 +193,8 @@ srcsz_lt_8:
         movq %xmm0, (%esp)
         mov 0x4(%esp), %edx
         mov 0x0(%esp), %eax
-        leave
-        ret
 
-return_xmm0_lo:
-        punpcklqdq %xmm0, %xmm0
-        movq %xmm0, (%esp)
-        mov 0x4(%esp), %edx
-        mov 0x0(%esp), %eax
+        mov -0x4(%ebp), %esi
+        mov -0x8(%ebp), %edi
         leave
         ret
