@@ -165,7 +165,6 @@ srcsz_lt_8:
         mov %esp, %edi
         rep movsb
 
-
         /* Padding round */
         movq (%esp), %xmm5      # xmm5_lo = b
 
