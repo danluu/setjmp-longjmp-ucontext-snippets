@@ -73,7 +73,7 @@ static int do_test(char *vector, int vector_sz, char key[16]) {
 	stddev_get(&noop, NULL, NULL, NULL, &avg_noop, &dev_noop);
 	stddev_get(&native, NULL, NULL, NULL, &avg_native, &dev_native);
 	stddev_get(&sse, NULL, NULL, NULL, &avg_sse, &dev_sse);
-	double fra = 0.05;
+	double fra = 0.04;
 	if ((dev_noop > fra * avg_noop) ||
 	    (dev_native > fra * avg_native) ||
 	    (dev_sse > fra * avg_sse))
@@ -131,7 +131,7 @@ int main() {
 		for (retry = 0; retry < MAX_RETRIES; retry += 1)
 			if (do_test(vector, sz, key) != 0)
 				break;
-		if (round == MAX_RETRIES) {
+		if (retry == MAX_RETRIES) {
 			printf("FAILED!\n");
 			exit(1);
 		}
