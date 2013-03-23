@@ -1,13 +1,9 @@
 
 .align 16, 0x00
-INITV0V1:
-        .ascii "uespemosmodnarod"
-        # .ascii "somepseudorandom"
-        # .octa 0x736f6d6570736575646f72616e646f6d
-INITV2V3:
-        .ascii "arenegylsetybdet"
-        # .ascii "lygeneratedbytes"
-        # .octa 0x6c7967656e6572617465646279746573
+INITV0V2:
+        .ascii "uespemosarenegyl"
+INITV1V3:
+        .ascii "modnarodsetybdet"
 
 #define ROTLQ(xmm, s, xmmtmp)    \
         movdqa xmm, xmmtmp;	\
@@ -63,7 +59,6 @@ INITV2V3:
         punpcklqdq xmmtmp, xmm0;        \
         punpckhqdq xmmtmp, xmm1
 
-
 #define DOUBLE_ROUND()                  \
         /* xmm0 = a(lo), c(hi) */       \
         /* xmm1 = b(lo), d(hi) */       \
@@ -77,8 +72,8 @@ INITV2V3:
 .align 16, 0x90
 .globl siphash24_half_round_asm
 .globl _siphash24_half_round_asm
-siphash24_half_round_asm:
-_siphash24_half_round_asm:
+siphash24_double_round_asm:
+_siphash24_double_round_asm:
         push %ebp
         mov %esp,%ebp
         sub $0x30, %esp
@@ -109,27 +104,32 @@ _siphash24_asm:
         mov %esi, -0x4(%ebp)
         mov %edi, -0x8(%ebp)
 
-        sub $0x30, %esp
-        and $0xfffffff0, %esp
-
-        /* Push eip to ecx */
-        call .l0
-.l0:    pop %ecx
-
         /* 0x08(%ebp) -> const void *src
          * 0x0c(%ebp) -> unsigned long src_sz
          * 0x10(%ebp) -> char key[16];
-         * neither src and key don't need to be aligned
-         */
+         * neither src and key may not be aligned */
+
+        /* Stack frame:
+         *   8 - -0x4(%ebp) esi, -0x8(%ebp) edi
+         *  16 - alignment
+         *  24 - 0x0(%esp) scratch area */
+        sub $0x30, %esp
+        and $0xfffffff0, %esp
+
+        /* Load key */
         mov 0x10(%ebp), %eax
-        movdqu (%eax), %xmm4	# load 128 key k0, k1
-        pshufd $0x4e, %xmm4, %xmm4
+        movdqu (%eax), %xmm6    # k0, k1
+        movdqu %xmm6, %xmm7
+        punpcklqdq %xmm6, %xmm6 # k0, k0
+        punpckhqdq %xmm7, %xmm7 # k1, k1
 
         /* Preamble */
-        movdqa INITV0V1-.l0(%ecx), %xmm0
-        pxor %xmm4, %xmm0       # v0^k0, v1^k1
-        movdqa INITV2V3-.l0(%ecx), %xmm1
-        pxor %xmm4, %xmm1       # v2^k0, v3^k1
+        call .l0
+.l0:    pop %ecx                # ecx = eip
+        movdqa INITV0V2-.l0(%ecx), %xmm0
+        pxor %xmm6, %xmm0       # v0^k0, v2^k0
+        movdqa INITV1V3-.l0(%ecx), %xmm1
+        pxor %xmm7, %xmm1       # v1^k1, v3^k1
 
         mov 0x08(%ebp), %esi    # esi = src
         mov 0x0c(%ebp), %ecx    # eax = src_sz
@@ -138,8 +138,6 @@ _siphash24_asm:
         mov %eax, 4(%esp)
         xor %edx, %edx
         mov %edx, 0(%esp)       # 8 bytes on stack are zeres + sz
-
-        ROTATE(%xmm0, %xmm1, %xmm3)
 
         /* Compression rounds */
         cmp $8, %ecx
