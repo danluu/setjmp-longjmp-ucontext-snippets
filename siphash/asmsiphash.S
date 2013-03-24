@@ -1,5 +1,14 @@
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#  define ALIGN_LOG
+#endif
 
-.align 16, 0x00
+#ifdef ALIGN_LOG
+#  define ALIGN(log) .align (log), 0x90;
+#else
+#  define ALIGN(log) .align 1 << (log), 0x90;
+#endif
+
+ALIGN(5)
 INITV0V2:
         .ascii "uespemosarenegyl"
 INITV1V3:
@@ -69,7 +78,7 @@ INITV1V3:
         HALF_ROUND(ROTQ1721)
 
 
-.align 16, 0x90
+ALIGN(5)
 .globl siphash24_half_round_asm
 .globl _siphash24_half_round_asm
 siphash24_double_round_asm:
@@ -94,7 +103,7 @@ _siphash24_double_round_asm:
         ret
 
 
-.align 16, 0x90
+ALIGN(5)
 .globl siphash24_asm
 .globl _siphash24_asm
 siphash24_asm:
@@ -142,6 +151,7 @@ _siphash24_asm:
         /* Compression rounds */
         cmp $8, %ecx
         jl srcsz_lt_8
+ALIGN(4)
 srcsz_gte_8:
         movq (%esi), %xmm6       # xmm6_lo = m
         add $8, %esi
@@ -154,6 +164,7 @@ srcsz_gte_8:
 
         cmp $8, %ecx
         jge srcsz_gte_8
+ALIGN(4)
 srcsz_lt_8:
 
         /* move the remainder to the stack (max 7 bytes)
