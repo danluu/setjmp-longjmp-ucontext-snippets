@@ -127,18 +127,16 @@ _siphash24_asm:
 
         /* Load key */
         mov 0x10(%ebp), %eax
-        movdqu (%eax), %xmm6    # k0, k1
-        movdqu %xmm6, %xmm7
-        punpcklqdq %xmm6, %xmm6 # k0, k0
-        punpckhqdq %xmm7, %xmm7 # k1, k1
+        movdqu (%eax), %xmm0    # k0, k1
+        movdqu %xmm0, %xmm1
+        punpcklqdq %xmm0, %xmm0 # k0, k0
+        punpckhqdq %xmm1, %xmm1 # k1, k1
 
         /* Preamble */
         call .l0
 .l0:    pop %ecx                # ecx = eip
-        movdqa INITV0V2-.l0(%ecx), %xmm0
-        pxor %xmm6, %xmm0       # v0^k0, v2^k0
-        movdqa INITV1V3-.l0(%ecx), %xmm1
-        pxor %xmm7, %xmm1       # v1^k1, v3^k1
+        pxor INITV0V2-.l0(%ecx), %xmm0       # v0^k0, v2^k0
+        pxor INITV1V3-.l0(%ecx), %xmm1       # v1^k1, v3^k1
 
         mov 0x08(%ebp), %esi    # esi = src
         mov 0x0c(%ebp), %ecx    # eax = src_sz
