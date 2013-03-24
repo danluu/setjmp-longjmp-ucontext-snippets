@@ -15,7 +15,7 @@ uint64_t siphash24_asm(const void *src, unsigned long src_sz, const char key[16]
 
 #define ROUNDS 60
 #define MAX_RETRIES 100
-#define ACCURACY 0.04
+#define ACCURACY 0.4
 
 static int do_noop_min() {
 	int retry;
@@ -114,6 +114,7 @@ int main() {
 	uint64_t out1, out2;
 
 	char *vector = "abcdefghabcdefghabcdefghabcdefgh";
+//	char *vector = "aaaaaaaa";
 	/* char *vector = ""; */
 	int vector_sz = strlen(vector);
 
@@ -135,8 +136,8 @@ int main() {
 
 	int noop_min = do_noop_min();
 	printf("[+] empty run: %i cycles\n", noop_min);
-	int sz;
-	for (sz = 31; sz <= 32; sz++) {
+	int sz = 0; //vector_sz-1;
+	for (; sz <= vector_sz; sz++) {
 		out1 = siphash24(vector, sz, key);
 		out2 = siphash24_asm(vector, sz, key);
 		assert(out1 == out2);
