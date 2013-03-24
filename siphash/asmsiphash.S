@@ -139,29 +139,30 @@ _siphash24_asm:
         pxor INITV1V3-.l0(%ecx), %xmm1       # v1^k1, v3^k1
 
         mov 0x08(%ebp), %esi    # esi = src
-        mov 0x0c(%ebp), %ecx    # eax = src_sz
-        mov %ecx, %eax          # ecx = src_sz
+        mov 0x0c(%ebp), %eax    # eax = src_sz
+        mov %eax, %ecx          # ecx = src_sz
+        shr $3, %ecx            # ecx /= 8
         shl $24, %eax           # size in top byte of eax
         mov %eax, 4(%esp)
         xor %edx, %edx
         mov %edx, 0(%esp)       # 8 bytes on stack are zeres + sz
 
         /* Compression rounds */
-        cmp $8, %ecx
-        jl srcsz_lt_8
+        cmp $0, %ecx
+        je srcsz_lt_8
 ALIGN(4)
 srcsz_gte_8:
         movq (%esi), %xmm6       # xmm6_lo = m
         add $8, %esi
-        sub $8, %ecx
+        dec %ecx
 
         pshufd $0x4e, %xmm6, %xmm7
         pxor %xmm7, %xmm1       # v3 ^= m
         DOUBLE_ROUND()
         pxor %xmm6, %xmm0       # v0 ^= m
 
-        cmp $8, %ecx
-        jge srcsz_gte_8
+        cmp $0, %ecx
+        je srcsz_gte_8
 ALIGN(4)
 srcsz_lt_8:
 
