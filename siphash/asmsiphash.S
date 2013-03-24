@@ -49,7 +49,7 @@ INITV1V3:
                                         \
         /* b ^= a; d ^= c */            \
         pxor %xmm0, %xmm1;              \
-        /* xmm0 = c, ROTATE(a, 32) */   \
+        /* a = c, c = ROTATE(a, 32) */   \
         pshufd $0x1E, %xmm0, %xmm0;
 
 #define ROTATE(xmm0, xmm1, xmmtmp)      \
@@ -143,13 +143,12 @@ _siphash24_asm:
         cmp $8, %ecx
         jl srcsz_lt_8
 srcsz_gte_8:
-        movq (%esi), %xmm6       # xmm6(lo) = m
+        movq (%esi), %xmm6       # xmm6_lo = m
         add $8, %esi
         sub $8, %ecx
 
         pshufd $0x4e, %xmm6, %xmm7
         pxor %xmm7, %xmm1       # v3 ^= m
-
         DOUBLE_ROUND()
         pxor %xmm6, %xmm0       # v0 ^= m
 
@@ -164,29 +163,28 @@ srcsz_lt_8:
         rep movsb
 
         /* Padding round */
-        movq (%esp), %xmm5      # xmm5_lo = b
+        movq (%esp), %xmm6      # xmm6_lo = b
 
         /* xmm7_hi = b */
-        pshufd $0x4e, %xmm5, %xmm7
-        pxor %xmm7, %xmm1       # v3^b
-
+        pshufd $0x4e, %xmm6, %xmm7
+        pxor %xmm7, %xmm1       # v3 ^= b
         DOUBLE_ROUND()
+        pxor %xmm6, %xmm0       # v0 ^= b
 
         /* load 0xff to xmm4:hi */
         pcmpeqw %xmm7, %xmm7
         psrlq $56, %xmm7
         pshufd $0x45, %xmm7, %xmm7
         pxor %xmm7, %xmm0       # v2 ^= 0xff
-        pxor %xmm5, %xmm0       # v0 ^= 0xb
 
         DOUBLE_ROUND()
         DOUBLE_ROUND()
 
         /* Epilogue */
-        pxor %xmm1, %xmm0       # xmm0 = v0^v2, v1^v3
+        pxor %xmm1, %xmm0       # xmm0 = v0^v1, v2^v3
         movdqa %xmm0, %xmm1
         punpckhqdq %xmm0, %xmm0	# the same as psrldq $8, %xmm0
-        pxor %xmm1, %xmm0	# lower 64 bits of xmm0 are final xor
+        pxor %xmm1, %xmm0	# xmm0_lo is the result
         movq %xmm0, (%esp)
         mov 0x4(%esp), %edx
         mov 0x0(%esp), %eax
