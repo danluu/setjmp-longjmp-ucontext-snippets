@@ -201,18 +201,19 @@ srcsz_lt_8:
 
         /* load the remainder (max 7 bytes) to xmm6 */
         cmp $6, %ecx
-        jg eq7
         je eq6
+        jg eq7
         cmp $4, %ecx
-        jg eq5
         je eq4
+        jg eq5
         cmp $2, %ecx
-        jg eq3
         je eq2
+        jg eq3
         cmp $0, %ecx
-        jg eq1
-ex0:
-        pxor %xmm6, %xmm6
+        je eq0
+eq1:
+        movzbl 0(%esi), %eax
+        movd %eax, %xmm6
         jmp done
 eq7:
         movl   0(%esi), %eax
@@ -253,9 +254,8 @@ eq2:
         movzwl 0(%esi), %eax
         movd %eax, %xmm6
         jmp done
-eq1:
-        movzbl 0(%esi), %eax
-        movd %eax, %xmm6
+eq0:
+        pxor %xmm6, %xmm6
 done:
         pxor %xmm6, %xmm7
         movdqa %xmm7, %xmm6
