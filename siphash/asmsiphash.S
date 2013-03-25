@@ -77,6 +77,10 @@ INITV1V3:
         HALF_ROUND(ROTQ1316);           \
         HALF_ROUND(ROTQ1721)
 
+#ifdef DRY_RUN
+# undef DOUBLE_ROUND
+# define DOUBLE_ROUND()
+#endif
 
 ALIGN(5)
 .globl siphash24_half_round_asm
@@ -267,8 +271,8 @@ done:
         pshufd $0x45, %xmm7, %xmm7
         pxor %xmm7, %xmm0       # v2 ^= 0xff
 
-       DOUBLE_ROUND()
-       DOUBLE_ROUND()
+        DOUBLE_ROUND()
+        DOUBLE_ROUND()
 
         /* Epilogue */
         pxor %xmm1, %xmm0       # xmm0 = v0^v1, v2^v3
