@@ -106,6 +106,10 @@ _siphash24_double_round_asm:
         leave
         ret
 
+ALIGN(5)
+_read_eip_to_ecx:
+        mov (%esp), %ecx
+        ret
 
 ALIGN(5)
 .globl siphash24_asm
@@ -135,8 +139,8 @@ _siphash24_asm:
         punpckhqdq %xmm1, %xmm1 # k1, k1
 
         /* Preamble */
-        call .l0
-.l0:    pop %ecx                # ecx = eip
+        call _read_eip_to_ecx
+.l0:    # ecx = eip
         pxor INITV0V2-.l0(%ecx), %xmm0       # v0^k0, v2^k0
         pxor INITV1V3-.l0(%ecx), %xmm1       # v1^k1, v3^k1
 
