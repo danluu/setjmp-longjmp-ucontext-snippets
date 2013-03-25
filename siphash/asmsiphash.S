@@ -124,10 +124,8 @@ _siphash24_asm:
 
         /* Stack frame:
          *   8 - -0x4(%ebp) esi, -0x8(%ebp) edi
-         *  16 - alignment
-         *  24 - 0x0(%esp) scratch area */
-        sub $0x30, %esp
-        and $0xfffffff0, %esp
+         *   8 - 0x0(%esp) scratch area */
+        sub $0x10, %esp
 
         /* Load key */
         mov 0x10(%ebp), %eax
