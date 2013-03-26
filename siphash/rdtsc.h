@@ -3,7 +3,7 @@
 #ifdef __i386__
 #  define RDTSC_DIRTY "%eax", "%ecx", "%edx"
 #elif __x86_64__
-#  define RDTSC_DIRTY "%rax", "%rcx", "%rdx"
+#  define RDTSC_DIRTY "%rax", "%rbx", "%rcx", "%rdx"
 #else
 # error unknown platform
 #endif
