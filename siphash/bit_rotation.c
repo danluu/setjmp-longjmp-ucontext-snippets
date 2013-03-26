@@ -7,6 +7,7 @@
 #define VECTORS 64
 
 static void bit_rotate(uint8_t input[8*VECTORS], uint64_t output[VECTORS]);
+static void print_matrix(uint64_t data[VECTORS]);
 
 int main() {
   uint8_t input[8*VECTORS];
@@ -15,21 +16,37 @@ int main() {
 
   memset(input, 0, sizeof(input));
   
-  int i = 0;
+  int i, j;
   for(i = 0; i < VECTORS; i++){
     input[i*8] = 0x80;
   }
   
-  input[78] = 0xA5;
+  input[0] = 0x0A;
 
   bit_rotate(input, output);
   bit_rotate((uint8_t*)output, output2);
 
   int r = memcmp(input,output2,8*VECTORS);
-  printf("output[0]: %llx\n", output[0]);
   printf("memcmp result: %i\n", r);
 
+
+  print_matrix((uint64_t*)input);
+  printf("\n");
+  print_matrix(output);
+  printf("\n");
+  print_matrix(output2);
   return 0;
+}
+
+static void print_matrix(uint64_t data[VECTORS]) {
+  int i, j;
+
+  for(i = 0; i < 8; i++) {
+    for(j = 0; j < 8; j++){
+      printf("%016llx ", data[i*8+j]);
+    }
+    printf("\n");
+  }
 }
 
 union xmm {
@@ -46,12 +63,14 @@ static void bit_rotate(uint8_t input[8*VECTORS], uint64_t output[VECTORS]) {
     for(i = 0; i < VECTORS/16; i++) {    
       union xmm x;
       for(j = 0; j < 16; j++) {
-	x.b[j] = input[(i*16+j)*8+b];
+	int input_num = i*16+j;
+	x.b[j] = input[(input_num)*8+b];
       }
       for(k = 0; k < 8; k++){
 	uint16_t v = _mm_movemask_epi8(x.x);
 	x.x = _mm_slli_epi64(x.x, 1);
-	o[(b*8 + k)*4 + i] = v;
+	int bit_num = b*8 + k;
+	o[bit_num*4 + i] = v;
       }
     }
   }
