@@ -66,7 +66,7 @@ static void bit_rotate(uint8_t input[8*VECTORS], uint64_t output[VECTORS]) {
 	int input_num = i*16+j;
 	x.b[j] = input[(input_num)*8+b];
       }
-      for(k = 0; k < 8; k++){
+      for(k = 7; k >= 0; k--){
 	uint16_t v = _mm_movemask_epi8(x.x);
 	x.x = _mm_slli_epi64(x.x, 1);
 	int bit_num = b*8 + k;
