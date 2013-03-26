@@ -73,6 +73,11 @@
 	HALF_ROUND(v0,v1,v2,v3,13,16);		\
 	HALF_ROUND(v2,v1,v0,v3,17,21);
 
+#ifdef DRY_RUN
+# undef DOUBLE_ROUND
+# define DOUBLE_ROUND(a,b,c,d)
+#endif
+
 
 void half_round(const uint64_t in[4], uint64_t out[4]) {
 	uint64_t a, b, c, d;
@@ -115,11 +120,11 @@ uint64_t siphash24(const void *src, unsigned long src_sz, const char key[16]) {
 	case 1: pt[0] = m[0];
 	}
 	b |= _le64toh(t);
-	b = 0;
 
 	v3 ^= b;
 	DOUBLE_ROUND(v0,v1,v2,v3);
-	v0 ^= b; v2 ^= 0xff;
+	v0 ^= b;
+	v2 ^= 0xff;
 	DOUBLE_ROUND(v0,v1,v2,v3);
 	DOUBLE_ROUND(v0,v1,v2,v3);
 	return (v0 ^ v1) ^ (v2 ^ v3);
