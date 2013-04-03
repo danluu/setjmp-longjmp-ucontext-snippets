@@ -8,8 +8,10 @@
 jmp_buf try;
 
 void handler(int sig) {
+  static int i = 0;
+
   write(2, "stack overflow\n", 15);
-  longjmp(try, 1);
+  longjmp(try, ++i);
   _exit(1);
 }
 
@@ -31,7 +33,7 @@ int main() {
   sigaltstack(&ss, 0);
   sigfillset(&sa.sa_mask);
   sigaction(SIGSEGV, &sa, 0);
-  if (!setjmp (try)) {
+  if (setjmp(try) < 3) {
     recurse(0);
   } else {
     printf("caught exception!\n");    
