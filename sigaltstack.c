@@ -20,7 +20,8 @@ unsigned recurse(unsigned x) {
 }
 
 int main() {
-  static char stack[SIGSTKSZ];
+  char* stack;
+  stack = malloc(sizeof(stack) * SIGSTKSZ);
   stack_t ss = {
     .ss_size = SIGSTKSZ,
     .ss_sp = stack,
