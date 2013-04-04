@@ -10,9 +10,9 @@ jmp_buf try;
 void handler(int sig) {
   static int i = 0;
 
-  write(2, "stack overflow\n", 15);
+  printf("stack overflow %d\n", i);
   longjmp(try, ++i);
-  _exit(1);
+  assert(0);
 }
 
 unsigned recurse(unsigned x) {
@@ -34,6 +34,7 @@ int main() {
   sigaltstack(&ss, 0);
   sigfillset(&sa.sa_mask);
   sigaction(SIGSEGV, &sa, 0);
+
   if (setjmp(try) < 3) {
     recurse(0);
   } else {
