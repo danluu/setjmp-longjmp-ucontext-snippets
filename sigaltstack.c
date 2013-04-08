@@ -35,7 +35,10 @@ int main() {
 
   sigaltstack(&ss, 0);
   sigfillset(&sa.sa_mask);
-  sigaction(SIGSEGV, &sa, 0);
+  sigaction(SIGALRM, &sa, 0);
+
+  raise(SIGALRM);
+  return 0;
 
   if (setjmp(try) < 3) {
     recurse(0);
