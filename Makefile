@@ -3,7 +3,7 @@ CC=gcc
 .PHONY: test coroutine channel setjmp exception coop heapros assembly assembly64 sigaltstack
 
 sigaltstack:
-	$(CC) -Wall -Wno-unused-parameter -g -ggdb \
+	$(CC) -Wall -O -Wno-unused-parameter -g -ggdb \
 		sigaltstack.c -o sigaltstack && ./sigaltstack
 
 assembly64:
