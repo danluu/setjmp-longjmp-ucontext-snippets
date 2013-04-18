@@ -1,6 +1,6 @@
 This was originally a one-day project to explore implementing concurrency in C. This is all exploratory code which isn't even close to production ready. On the first day, we tried implementing the most naive possible implemenation of coroutines, allocating a fixed amount of extra stack space, fixing a particular amount of stack space for each coroutine, giving each coroutine EXTRA_SPACE / N stack space, for some fixed N. 
 
-On top of that, we implemented channels (for something resembling Go style concurrency), again using the dumbest possible implementation. A send on receive on a channel simply marks a coroutine unrunnable in the channel scheduler until the channel sees a receive or a send, respectively, and the value sent over the channel is simply a heap allocated struct.
+On top of that, we implemented channels (for something resembling Go style concurrency), again using the dumbest possible implementation. A send or receive on a channel simply marks a coroutine unrunnable in the channel scheduler until the channel sees a receive or a send, respectively, and the value sent over the channel is simply a heap allocated struct.
 
 A few days later, we spent half a day creating the second most naive coroutine implementation possible: allocate space on the heap for each coroutine, and swap stacks when switching between coroutines. Turns out, this is what the Julia language does, so this idea turned out to be more practical than we realized.
 
