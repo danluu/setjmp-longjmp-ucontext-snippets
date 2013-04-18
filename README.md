@@ -1,10 +1,10 @@
 This was originally a one-day project to explore implementing concurrency in C. This is all exploratory code which isn't even close to production ready. On the first day, we tried implementing the most naive possible implemenation of coroutines, allocating a fixed amount of extra stack space, fixing a particular amount of stack space for each coroutine, giving each coroutine EXTRA_SPACE / N stack space, for some fixed N. 
 
-On top of that, we implemented channels (for something resembling Go style concurrency), again using the dumbest possible implementation. A send or receive on a channel simply marks a coroutine unrunnable in the channel scheduler until the channel sees a receive or a send, respectively, and the value sent over the channel is simply a heap allocated struct.
+On top of that, we implemented channels (for something resembling Go style concurrency), again using the dumbest possible implementation. A send or receive on a channel simply marks a coroutine unrunnable in the channel scheduler until the channel sees the inverse operation.
 
-A few days later, we spent half a day creating the second most naive coroutine implementation possible: allocate space on the heap for each coroutine, and swap stacks when switching between coroutines. Turns out, this is what the Julia language does, so this idea turned out to be more practical than we realized.
+A few days later, we spent half a day creating the second simplest coroutine implementation we could think of: allocate space on the heap for each coroutine, and swap stacks when switching between coroutines. Turns out, this is what the Julia language does, so this idea turned out to be more practical than we realized.
 
-A possible improvement would be to really allocate a different stack for each coroutine. The most obvious way to do that would be to use ucontext, but that doesn't appear to have good cross-platform support. In particular, the Mac OS X implementation seems to be fundamentally broken. I played around with sigaltstack as an alternative. That ought to work, and I may try implementing coroutines on top of sigaltstack at some point.
+A possible improvement would be to allocate a seperate stack space for each coroutine. The most obvious way to do that would be to use ucontext, but that doesn't appear to have good cross-platform support. In particular, the Mac OS X implementation seems to be fundamentally broken. I played around with sigaltstack as an alternative. That ought to work, and I may try implementing coroutines on top of sigaltstack at some point.
 
 
 - coroutines.*: Implementation of coroutines using setjmp and longjmp
