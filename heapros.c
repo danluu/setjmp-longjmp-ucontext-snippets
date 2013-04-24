@@ -19,7 +19,7 @@ int coro_pid;
 
 coroutine_cb scheduler_next_coro;
 
-#define MAX_COROS 10
+#define MAX_COROS 100
 
 struct {
   jmp_buf jmp;
@@ -33,7 +33,7 @@ static void f()
   printf("Hi, I'm f (local_var --> %d)!\n", local_var);
   spawn(g);
   printf("f just spawned g (local_var --> %d)\n", local_var);
-  for (local_var = 0; local_var < 10; local_var++)
+  for (local_var = 0; local_var < 32; local_var++)
   {
     spawn(h);
     printf("f just spawned h (local_var --> %d)\n", local_var);    
