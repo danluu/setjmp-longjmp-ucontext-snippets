@@ -33,7 +33,7 @@ static void f()
   printf("Hi, I'm f (local_var --> %d)!\n", local_var);
   spawn(g);
   printf("f just spawned g (local_var --> %d)\n", local_var);
-  for (local_var = 0; local_var < 32; local_var++)
+  for (local_var = 0; local_var < 2; local_var++)
   {
     spawn(h);
     printf("f just spawned h (local_var --> %d)\n", local_var);    
@@ -69,7 +69,7 @@ static void scheduler(coroutine_cb coro)
   {
     coro_pid = max_pid++;
     printf("about to run coro %d...\n", coro_pid);
-    char *buf = alloca(0x1000);
+    char *buf = alloca(0x2000); // was 0x1000 when we didn't allocate extra space for scheduler stack
     asm volatile("" :: "m" (buf));
     scheduler_next_coro();
     assert(0);
@@ -85,15 +85,18 @@ static void scheduler(coroutine_cb coro)
     static int stack_sz; 
     stack_sz = coroutines[coro_pid].stack_sz;
     static char *d; 
-    d = (char *)scheduler_rbp - stack_sz;
+    d = (char *)scheduler_rbp - stack_sz - 0x1000;
     static char *s; 
     s = (char *)coroutines[coro_pid].stack;
     // memcpy -- can't call function, because we'll overwrite the stack for any called function
     // since we have alloca(0x1000) above, we should be able to not overwrite the first 0x1000 bytes and still be safe
+    memcpy(d, s, stack_sz);
+    /*
     for (i = 0; i < stack_sz; i++)
     {
       *d++ = *s++;
     }
+    */
 
     longjmp(coroutines[coro_pid].jmp, 1);
     assert(0);

@@ -15,7 +15,7 @@ assembly:
 		assembly.c  assembly_stuff.S -o assembly && ./assembly
 
 heapros:
-	$(CC) -Wall -Wextra -Wno-unused-parameter -g -ggdb \
+	$(CC) -Wall -Wextra -Wno-unused-parameter -g -ggdb3 \
 		heapros.c -o heapros && ./heapros
 
 channel:
