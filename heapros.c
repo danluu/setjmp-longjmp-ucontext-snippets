@@ -89,6 +89,7 @@ static void scheduler(coroutine_cb coro)
     static char *s; 
     s = (char *)coroutines[coro_pid].stack;
     // memcpy -- can't call function, because we'll overwrite the stack for any called function
+    // since we have alloca(0x1000) above, we should be able to not overwrite the first 0x1000 bytes and still be safe
     for (i = 0; i < stack_sz; i++)
     {
       *d++ = *s++;
