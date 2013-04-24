@@ -59,7 +59,11 @@ static void scheduler(coroutine_cb coro)
 {
   printf("starting the scheduler...\n");
   static int max_pid = 1;
-  scheduler_rbp = __builtin_frame_address(0);
+
+  // we move down 0x1000 to give scheduler space to call functions and allocate stack variables without having them get
+  // overwritten by the memcpy below. Before we did this, we had to manually copy memory instead of using memcpy
+  // because we would overwrite memcpy's stack
+  scheduler_rbp = __builtin_frame_address(0) - 0x1000;
   scheduler_next_coro = coro;
   int value = setjmp(scheduler_jmp);
   // value == 0 means just starting
@@ -80,24 +84,9 @@ static void scheduler(coroutine_cb coro)
     // restore coroutine marked by value (pid)
     coro_pid = value;
 
-    // make them definitely not on the stack
-    static int i;
-    static int stack_sz; 
+    int stack_sz; 
     stack_sz = coroutines[coro_pid].stack_sz;
-    static char *d; 
-    d = (char *)scheduler_rbp - stack_sz - 0x1000;
-    static char *s; 
-    s = (char *)coroutines[coro_pid].stack;
-    // memcpy -- can't call function, because we'll overwrite the stack for any called function
-    // since we have alloca(0x1000) above, we should be able to not overwrite the first 0x1000 bytes and still be safe
-    memcpy(d, s, stack_sz);
-    /*
-    for (i = 0; i < stack_sz; i++)
-    {
-      *d++ = *s++;
-    }
-    */
-
+    memcpy(scheduler_rbp - stack_sz, coroutines[coro_pid].stack, stack_sz);
     longjmp(coroutines[coro_pid].jmp, 1);
     assert(0);
   }
