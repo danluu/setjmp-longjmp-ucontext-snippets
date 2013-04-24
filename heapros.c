@@ -88,6 +88,7 @@ static void scheduler(coroutine_cb coro)
     d = (char *)scheduler_rbp - stack_sz;
     static char *s; 
     s = (char *)coroutines[coro_pid].stack;
+    // memcpy -- can't call function, because we'll overwrite the stack for any called function
     for (i = 0; i < stack_sz; i++)
     {
       *d++ = *s++;
