@@ -138,3 +138,23 @@ int main()
   assert(0);
   return 0;
 }
+
+// How the test program works:
+// main calls scheduler
+// scheduler saves scheduler_rbp
+// scheduler sets scheduler_next_coro to f
+// scheduler sets scheduler_jmp. First time, so return is 0
+// alloca enough space for the stack
+// call scheduler_next_coro == f
+// call spawn(g)
+// set scheduler_next_coro to g
+// yield(-1)
+// malloc enough space (scheduler_rbp - fudgy_rsp)
+// copy stack over to heap
+// set a setjmp
+// longjmp into scheduler_jmp with -1
+// we're back in the scheduler's stackframe. alloca more stack space
+// ...
+// eventually call yield(1)
+// longjmp into scheduler_jmp with 1
+// cp 1's stack in, keep running
