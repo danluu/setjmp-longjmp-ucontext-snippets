@@ -1,3 +1,5 @@
+// Measure the cost of TLB thrashing from page-aligned accesses
+
 #include <stdio.h>
 #include "rdtsc.h"
 #include "stddev.h"
@@ -26,6 +28,7 @@ uint64_t access_mem(int align) {
     sum += a[offset];
   }
 
+  // Do accesses seperated by one page +/- alignment offset
   RDTSC_START(tsc_before);
   for (i = 0; i < RUNS; i++) {
     offset = 0;
@@ -45,5 +48,7 @@ uint64_t access_mem(int align) {
 int main() {
   printf("Page-aligned time:   %llu\n", access_mem(0));  
   printf("Page-unaligned time: %llu\n", access_mem(LINE_SIZE));  
+  printf("Page-aligned time:   %llu\n", access_mem(0));
+  printf("Page-unaligned time: %llu\n", access_mem(LINE_SIZE));
   return 0;
 }
