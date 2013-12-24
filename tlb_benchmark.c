@@ -8,7 +8,7 @@
 #define LINE_SIZE 128
 #define PG_SIZE 4096
 
-int access_mem(int align) {
+uint64_t access_mem(int align) {
   static char a[2 * NUM_LINES * PG_SIZE];
   int sum = 0;
   uint64_t tsc_before, tsc_after, tsc;
@@ -37,13 +37,13 @@ int access_mem(int align) {
   RDTSC_START(tsc_after);
   tsc = tsc_after - tsc_before;
 
-  printf("Total time: %llu \n", tsc);
+  printf("Sum: %i\n", sum);
 
-  return sum;
+  return tsc;
 }
 
 int main() {
-  printf("Sum: %i\n", access_mem(0));  
-  printf("Sum: %i\n", access_mem(LINE_SIZE));  
+  printf("Page-aligned time:   %llu\n", access_mem(0));  
+  printf("Page-unaligned time: %llu\n", access_mem(LINE_SIZE));  
   return 0;
 }
