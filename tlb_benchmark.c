@@ -46,9 +46,9 @@ uint64_t access_mem(int align) {
 }
 
 int main() {
-  printf("Page-aligned time:   %llu\n", access_mem(0));  
-  printf("Page-unaligned time: %llu\n", access_mem(LINE_SIZE));  
-  printf("Page-aligned time:   %llu\n", access_mem(0));
-  printf("Page-unaligned time: %llu\n", access_mem(LINE_SIZE));
+  printf("Page-aligned time:          %llu\n", access_mem(0));
+  printf("Page-unaligned (+128) time: %llu\n", access_mem(LINE_SIZE));
+  printf("Page-aligned time:          %llu\n", access_mem(0));
+  printf("Page-unaligned (+128) time: %llu\n", access_mem(LINE_SIZE));
   return 0;
 }
