@@ -18,7 +18,8 @@ uint64_t access_mem(int align) {
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
   uint64_t offset;
 
-  min_tsc -= 1; // Set to max value
+  min_tsc = 0;
+  min_tsc--;
 
   int i, j;
   for (i = 0; i < NUM_LINES * PG_SIZE; i++) {
@@ -49,7 +50,7 @@ uint64_t access_mem(int align) {
 
   printf("Sum: %i\n", sum);
 
-  return tsc;
+  return min_tsc;
 }
 
 int main() {
