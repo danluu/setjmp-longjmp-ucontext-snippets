@@ -4,7 +4,7 @@
 #include "rdtsc.h"
 #include "stddev.h"
 
-#define RUNS 1000
+#define RUNS 10000
 
 #define NUM_LINES 10000
 #define LINE_SIZE 128
@@ -58,7 +58,7 @@ int main() {
 
   aligned_time = access_mem(0);
   unaligned_time = access_mem(LINE_SIZE);
-  diff = (double)unaligned_time / (double)aligned_time;
+  diff = (double)aligned_time / (double)unaligned_time;
 
   printf("Page-aligned time:          %llu\n", aligned_time);
   printf("Page-unaligned (+128) time: %llu\n", unaligned_time);
@@ -66,7 +66,7 @@ int main() {
 
   aligned_time = access_mem(0);
   unaligned_time = access_mem(LINE_SIZE);
-  diff = (double)unaligned_time / (double)aligned_time;
+  diff = (double)aligned_time / (double)unaligned_time;
 
   printf("Page-aligned time:          %llu\n", aligned_time);
   printf("Page-unaligned (+128) time: %llu\n", unaligned_time);
