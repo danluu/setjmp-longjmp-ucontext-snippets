@@ -10,11 +10,15 @@
 #define LINE_SIZE 128
 #define PG_SIZE 4096
 
+inline uint64_t min(uint64_t a, uint64_t b) { return (a < b) ? a : b; }
+
 uint64_t access_mem(int align) {
   static char a[2 * NUM_LINES * PG_SIZE];
   int sum = 0;
-  uint64_t tsc_before, tsc_after, tsc;
+  uint64_t tsc_before, tsc_after, tsc, min_tsc;
   uint64_t offset;
+
+  min_tsc -= 1; // Set to max value
 
   int i, j;
   for (i = 0; i < NUM_LINES * PG_SIZE; i++) {
@@ -29,16 +33,19 @@ uint64_t access_mem(int align) {
   }
 
   // Do accesses seperated by one page +/- alignment offset
-  RDTSC_START(tsc_before);
   for (i = 0; i < RUNS; i++) {
     offset = 0;
+    RDTSC_START(tsc_before);
     for (j = 0; j < NUM_LINES; j++) {
+
       offset += PG_SIZE + align;
       sum += a[offset];
     }
+    RDTSC_START(tsc_after);
+    tsc = tsc_after - tsc_before;
+    min_tsc = min(min_tsc, tsc);
+
   }
-  RDTSC_START(tsc_after);
-  tsc = tsc_after - tsc_before;
 
   printf("Sum: %i\n", sum);
 
@@ -46,9 +53,24 @@ uint64_t access_mem(int align) {
 }
 
 int main() {
-  printf("Page-aligned time:          %llu\n", access_mem(0));
-  printf("Page-unaligned (+128) time: %llu\n", access_mem(LINE_SIZE));
-  printf("Page-aligned time:          %llu\n", access_mem(0));
-  printf("Page-unaligned (+128) time: %llu\n", access_mem(LINE_SIZE));
+  double diff;
+  uint64_t aligned_time, unaligned_time;
+
+  aligned_time = access_mem(0);
+  unaligned_time = access_mem(LINE_SIZE);
+  diff = (double)unaligned_time / (double)aligned_time;
+
+  printf("Page-aligned time:          %llu\n", aligned_time);
+  printf("Page-unaligned (+128) time: %llu\n", unaligned_time);
+  printf("Difference: %f\n", diff);
+
+  aligned_time = access_mem(0);
+  unaligned_time = access_mem(LINE_SIZE);
+  diff = (double)unaligned_time / (double)aligned_time;
+
+  printf("Page-aligned time:          %llu\n", aligned_time);
+  printf("Page-unaligned (+128) time: %llu\n", unaligned_time);
+  printf("Difference: %f\n", diff);
+
   return 0;
 }
