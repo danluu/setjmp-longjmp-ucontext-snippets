@@ -1,6 +1,6 @@
 CC=gcc
 
-.PHONY: tlb_benchmark test coroutine channel setjmp exception coop heapros assembly assembly64 sigaltstack
+.PHONY: cache_conflict_benchmark test coroutine channel setjmp exception coop heapros assembly assembly64 sigaltstack
 sigaltstack:
 	$(CC) -Wall -O -Wno-unused-parameter -g -ggdb \
 		sigaltstack.c -o sigaltstack && ./sigaltstack
@@ -30,7 +30,7 @@ test:
 		stack_engine_ubenchmark.c -o test && ./test
 
 cache_conflict_benchmark:
-	$(CC) -O3 -Wall -Wextra -g -ggdb \
+	$(CC) -Os -Wall -Wextra -g -ggdb \
 		cache_conflict_benchmark.c -o cache_conflict_benchmark && ./cache_conflict_benchmark
 
 setjmp:
