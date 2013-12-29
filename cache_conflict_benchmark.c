@@ -51,7 +51,7 @@ uint64_t access_mem(int align, int n) {
 
   }
 
-  printf("Sum: %i\n", sum);
+  printf("Sum: %i\n", sum); // Dumb trick to prevent code from being optimized away
 
   return min_tsc;
 }
@@ -74,6 +74,7 @@ int main() {
   test_and_print(10);
   test_and_print(100);
   test_and_print(1000);
+  test_and_print(10000);
 
   return 0;
 }
