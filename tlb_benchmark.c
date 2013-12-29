@@ -4,10 +4,10 @@
 #include "rdtsc.h"
 #include "stddev.h"
 
-#define RUNS 10000
+#define RUNS 1000000
 
-#define NUM_LINES 10000
-#define LINE_SIZE 128
+#define NUM_LINES 1024
+#define LINE_SIZE 64
 #define PG_SIZE 4096
 
 inline uint64_t min(uint64_t a, uint64_t b) { return (a < b) ? a : b; }
