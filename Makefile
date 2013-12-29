@@ -29,9 +29,9 @@ test:
 	$(CC) -O3 -Wall -Wextra -g -ggdb \
 		stack_engine_ubenchmark.c -o test && ./test
 
-tlb_benchmark:
+cache_conflict_benchmark:
 	$(CC) -O3 -Wall -Wextra -g -ggdb \
-		tlb_benchmark.c -o tlb_benchmark && ./tlb_benchmark
+		cache_conflict_benchmark.c -o cache_conflict_benchmark && ./cache_conflict_benchmark
 
 setjmp:
 	$(CC) -U_FORTIFY_SOURCE -Wall -Wextra -Wno-unused-parameter -g -ggdb \

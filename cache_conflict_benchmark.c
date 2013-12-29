@@ -6,7 +6,7 @@
 
 #define RUNS 1000000
 
-#define NUM_LINES 1024
+#define NUM_LINES 1000
 #define LINE_SIZE 64
 #define PG_SIZE 4096
 
@@ -38,7 +38,6 @@ uint64_t access_mem(int align) {
     offset = 0;
     RDTSC_START(tsc_before);
     for (j = 0; j < NUM_LINES; j++) {
-
       offset += PG_SIZE + align;
       sum += a[offset];
     }
