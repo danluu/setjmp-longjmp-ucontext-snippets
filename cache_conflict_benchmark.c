@@ -31,10 +31,12 @@ uint64_t access_mem(int align, int n) {
   }
 
   // Warmup
-  offset = 0;
-  for (j = 0; j < n; j++) {
-    offset += PG_SIZE + align;
-    sum += a[offset];
+  for (i = 0; i < 3; i++) {
+    offset = 0;
+    for (j = 0; j < n; j++) {
+      offset += PG_SIZE + align;
+      sum += a[offset];
+    }
   }
 
   // Do accesses seperated by one page +/- alignment offset
@@ -71,10 +73,14 @@ void test_and_print(int n) {
 }
 
 int main() {
-  test_and_print(10);
-  test_and_print(100);
-  test_and_print(1000);
-  test_and_print(10000);
+  test_and_print(16);
+  test_and_print(32);
+  test_and_print(64);
+  test_and_print(128);
+  test_and_print(256);
+  test_and_print(512);
+  test_and_print(1024);
+  test_and_print(2048);
 
   return 0;
 }
