@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
+#include <stdint.h>
 #include "rdtsc.h"
 #include "stddev.h"
 
@@ -22,8 +23,7 @@ uint64_t access_mem(int align, int n) {
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
   uint64_t offset;
 
-  min_tsc = 0;
-  min_tsc--;
+  min_tsc = UINT64_MAX;
 
   int i, j;
   for (i = 0; i < n * PG_SIZE; i++) {
