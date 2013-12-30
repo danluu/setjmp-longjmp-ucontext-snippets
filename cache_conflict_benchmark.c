@@ -8,7 +8,7 @@
 #include "rdtsc.h"
 #include "stddev.h"
 
-#define RUNS 1000000
+#define GRAPH
 
 #define MAX_NUM_LINES 10000
 #define LINE_SIZE 64
@@ -17,7 +17,7 @@
 inline uint64_t min(uint64_t a, uint64_t b) { return (a < b) ? a : b; }
 
 // Do 'n' accesses with a relative offset of 'align'
-uint64_t access_mem(int align, int n) {
+uint64_t access_mem(int align, int n, int runs) {
   static char a[2 * MAX_NUM_LINES * PG_SIZE];
   int sum = 0;
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
@@ -40,7 +40,7 @@ uint64_t access_mem(int align, int n) {
   }
 
   // Do accesses seperated by one page +/- alignment offset
-  for (i = 0; i < RUNS; i++) {
+  for (i = 0; i < runs; i++) {
     offset = 0;
     RDTSC_START(tsc_before);
     for (j = 0; j < n; j++) {
@@ -61,9 +61,10 @@ uint64_t access_mem(int align, int n) {
 void test_and_print(int n) {
   double diff;
   uint64_t aligned_time, unaligned_time;
+  int runs = 1000000;
 
-  aligned_time = access_mem(0, n);
-  unaligned_time = access_mem(LINE_SIZE, n);
+  aligned_time = access_mem(0, n, runs);
+  unaligned_time = access_mem(LINE_SIZE, n, runs);
   diff = (double)aligned_time / (double)unaligned_time;
 
   printf("----------%i accesses--------\n", n);
@@ -72,7 +73,39 @@ void test_and_print(int n) {
   printf("Difference: %f\n", diff);
 }
 
+void inefficient_csv_output(int n) {
+  double diff;
+  uint64_t *aligned_time, *unaligned_time;
+  int runs = 1000000;
+  int i;
+  
+  aligned_time = malloc(n * sizeof(uint64_t));
+  unaligned_time = malloc(n * sizeof(uint64_t));
+
+  for (i = 0; i < n; i++) {
+    aligned_time[i] = access_mem(0, i, runs);
+    unaligned_time[i] = access_mem(LINE_SIZE, i, runs);
+  }
+
+  for (i = 0; i < n; i++) {
+    printf("%" PRIu64 ",", aligned_time[i]);
+  }
+  printf("\n");
+
+  for (i = 0; i < n; i++) {
+    printf("%" PRIu64 ",", unaligned_time[i]);
+  }
+  printf("\n");
+
+  for (i = 0; i < n; i++) {
+    diff = (double)unaligned_time[i] / (double)unaligned_time[i];
+    printf("%f,", diff);
+  }
+  printf("\n");
+}
+
 int main() {
+  #ifndef GRAPH
   test_and_print(16);
   test_and_print(32);
   test_and_print(64);
@@ -81,6 +114,8 @@ int main() {
   test_and_print(512);
   test_and_print(1024);
   test_and_print(2048);
-
+  #else
+  inefficient_csv_output(1024);
+  #endif
   return 0;
 }
