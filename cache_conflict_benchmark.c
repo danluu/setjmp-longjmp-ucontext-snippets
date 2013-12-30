@@ -98,7 +98,7 @@ void inefficient_csv_output(int n) {
   printf("\n");
 
   for (i = 0; i < n; i++) {
-    diff = (double)unaligned_time[i] / (double)unaligned_time[i];
+    diff = (double)aligned_time[i] / (double)unaligned_time[i];
     printf("%f,", diff);
   }
   printf("\n");
