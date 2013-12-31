@@ -26,6 +26,9 @@ uint64_t access_mem(int align, int n, int runs) {
 
   min_tsc = UINT64_MAX;
 
+  // Generate pointer chasing array accesses. Each a[i] that we want to access
+  // points to something that's (PG_SIZE+align)/WORD_SIZE down the line. The
+  // last entry points to 0 so that we loop around.
   int i, j;
   offset = 0;
   for (i = 0; i < n * PG_SIZE; i += (PG_SIZE+align)/WORD_SIZE) {
