@@ -8,17 +8,18 @@
 #include "rdtsc.h"
 #include "stddev.h"
 
-#define GRAPH
+//#define GRAPH
 
 #define MAX_NUM_LINES 10000
 #define LINE_SIZE 64
 #define PG_SIZE 4096
+#define WORD_SIZE 8
 
 inline uint64_t min(uint64_t a, uint64_t b) { return (a < b) ? a : b; }
 
 // Do 'n' accesses with a relative offset of 'align'
 uint64_t access_mem(int align, int n, int runs) {
-  static char a[2 * MAX_NUM_LINES * PG_SIZE];
+  static uint64_t a[2 * MAX_NUM_LINES * PG_SIZE];
   int sum = 0;
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
   uint64_t offset;
@@ -26,16 +27,19 @@ uint64_t access_mem(int align, int n, int runs) {
   min_tsc = UINT64_MAX;
 
   int i, j;
-  for (i = 0; i < n * PG_SIZE; i++) {
-    a[i] = i % 17;
+  offset = 0;
+  for (i = 0; i < n * PG_SIZE; i += (PG_SIZE+align)/WORD_SIZE) {
+    offset += (PG_SIZE+align) / WORD_SIZE;
+    a[i] = offset;
   }
+  a[n * PG_SIZE / WORD_SIZE] = 0;
 
   // Warmup
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 2; i++) {
     offset = 0;
     for (j = 0; j < n; j++) {
-      offset += PG_SIZE + align;
       sum += a[offset];
+      offset = a[offset];
     }
   }
 
@@ -44,8 +48,8 @@ uint64_t access_mem(int align, int n, int runs) {
     offset = 0;
     RDTSC_START(tsc_before);
     for (j = 0; j < n; j++) {
-      offset += PG_SIZE + align;
       sum += a[offset];
+      offset = a[offset];
     }
     RDTSC_START(tsc_after);
     tsc = tsc_after - tsc_before;
@@ -113,7 +117,6 @@ int main() {
   test_and_print(256);
   test_and_print(512);
   test_and_print(1024);
-  test_and_print(2048);
   #else
   inefficient_csv_output(1024);
   #endif
