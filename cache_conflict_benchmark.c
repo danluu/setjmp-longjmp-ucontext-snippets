@@ -18,7 +18,9 @@
 inline uint64_t min(uint64_t a, uint64_t b) { return (a < b) ? a : b; }
 
 // Do 'n' accesses with a relative offset of 'align'
-uint64_t access_mem(int align, int n, int runs) {
+// pointer_chase == 0: do reads and use the read in a running computation
+// pointer_chase == 1: do read and use read to find next address
+uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
   static uint64_t a[2 * MAX_NUM_LINES * PG_SIZE];
   int sum = 0;
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
@@ -26,10 +28,14 @@ uint64_t access_mem(int align, int n, int runs) {
 
   min_tsc = UINT64_MAX;
 
+  int i, j;
+  // Fill up array with some nonsense
+  for (i = 0; i < n * PG_SIZE; i++) {
+    a[i] = i % 17;
+  }
   // Generate pointer chasing array accesses. Each a[i] that we want to access
   // points to something that's (PG_SIZE+align)/WORD_SIZE down the line. The
   // last entry points to 0 so that we loop around.
-  int i, j;
   offset = 0;
   for (i = 0; i < n * PG_SIZE; i += (PG_SIZE+align)/WORD_SIZE) {
     offset += (PG_SIZE+align) / WORD_SIZE;
@@ -42,7 +48,11 @@ uint64_t access_mem(int align, int n, int runs) {
     offset = 0;
     for (j = 0; j < n; j++) {
       sum += a[offset];
-      offset = a[offset];
+      if (pointer_chase) {
+	offset = a[offset];
+      } else {
+	offset += PG_SIZE + align;
+      }
     }
   }
 
@@ -52,7 +62,11 @@ uint64_t access_mem(int align, int n, int runs) {
     RDTSC_START(tsc_before);
     for (j = 0; j < n; j++) {
       sum += a[offset];
-      offset = a[offset];
+      if (pointer_chase) {
+	offset = a[offset];
+      } else {
+	offset += PG_SIZE + align;
+      }
     }
     RDTSC_START(tsc_after);
     tsc = tsc_after - tsc_before;
@@ -65,13 +79,13 @@ uint64_t access_mem(int align, int n, int runs) {
   return min_tsc;
 }
 
-void test_and_print(int n) {
+void test_and_print(int n, int pointer_chase) {
   double diff;
   uint64_t aligned_time, unaligned_time;
   int runs = 1000000;
 
-  aligned_time = access_mem(0, n, runs);
-  unaligned_time = access_mem(LINE_SIZE, n, runs);
+  aligned_time = access_mem(0, n, runs, pointer_chase);
+  unaligned_time = access_mem(LINE_SIZE, n, runs, pointer_chase);
   diff = (double)aligned_time / (double)unaligned_time;
 
   printf("----------%i accesses--------\n", n);
@@ -80,7 +94,7 @@ void test_and_print(int n) {
   printf("Difference: %f\n", diff);
 }
 
-void inefficient_csv_output(int n) {
+void inefficient_csv_output(int n, int pointer_chase) {
   double diff;
   uint64_t *aligned_time, *unaligned_time;
   int runs = 1000000;
@@ -90,8 +104,8 @@ void inefficient_csv_output(int n) {
   unaligned_time = malloc(n * sizeof(uint64_t));
 
   for (i = 0; i < n; i++) {
-    aligned_time[i] = access_mem(0, i, runs);
-    unaligned_time[i] = access_mem(LINE_SIZE, i, runs);
+    aligned_time[i] = access_mem(0, i, runs, pointer_chase);
+    unaligned_time[i] = access_mem(LINE_SIZE, i, runs, pointer_chase);
   }
 
   for (i = 0; i < n; i++) {
@@ -113,15 +127,16 @@ void inefficient_csv_output(int n) {
 
 int main() {
   #ifndef GRAPH
-  test_and_print(16);
-  test_and_print(32);
-  test_and_print(64);
-  test_and_print(128);
-  test_and_print(256);
-  test_and_print(512);
-  test_and_print(1024);
+  test_and_print(16, 1);
+  test_and_print(32, 1);
+  test_and_print(64, 1);
+  test_and_print(128, 1);
+  test_and_print(256, 1);
+  test_and_print(512, 1);
+  test_and_print(1024, 1);
   #else
-  inefficient_csv_output(1024);
+  inefficient_csv_output(1024, 0);
+  inefficient_csv_output(1024, 1);
   #endif
   return 0;
 }
