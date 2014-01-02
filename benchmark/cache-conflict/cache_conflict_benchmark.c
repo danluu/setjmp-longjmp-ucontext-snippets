@@ -97,7 +97,7 @@ void test_and_print(int n, int pointer_chase) {
 void inefficient_csv_output(int n, int pointer_chase) {
   double diff;
   uint64_t *aligned_time, *unaligned_time;
-  int runs = 1000000;
+  int runs = 100;
   int i;
   
   aligned_time = malloc(n * sizeof(uint64_t));
