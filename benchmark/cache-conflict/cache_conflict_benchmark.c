@@ -15,14 +15,12 @@
 #define PG_SIZE 4096
 #define WORD_SIZE 8
 
-inline uint64_t min(uint64_t a, uint64_t b) { return (a < b) ? a : b; }
-
 // Do 'n' accesses with a relative offset of 'align'
 // pointer_chase == 0: do reads and use the read in a running computation
 // pointer_chase == 1: do read and use read to find next address
 uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
   static uint64_t a[2 * MAX_NUM_LINES * PG_SIZE];
-  int sum = 0;
+  int sum = 0; // Prevent code from being optimized away
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
   uint64_t offset;
 
@@ -43,19 +41,6 @@ uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
   }
   a[n * PG_SIZE / WORD_SIZE] = 0;
 
-  // Warmup
-  for (i = 0; i < 2; i++) {
-    offset = 0;
-    for (j = 0; j < n; j++) {
-      sum += a[offset];
-      if (pointer_chase) {
-	offset = a[offset];
-      } else {
-	offset += PG_SIZE + align;
-      }
-    }
-  }
-
   // Do accesses seperated by one page +/- alignment offset
   for (i = 0; i < runs; i++) {
     offset = 0;
@@ -68,13 +53,12 @@ uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
 	offset += PG_SIZE + align;
       }
     }
-    RDTSC_START(tsc_after);
+    RDTSC_STOP(tsc_after);
     tsc = tsc_after - tsc_before;
-    min_tsc = min(min_tsc, tsc);
-
+    min_tsc = min_tsc < tsc ? min_tsc : tsc;
   }
 
-  printf("Sum: %i\n", sum); // Dumb trick to prevent code from being optimized away
+  asm volatile("" :: "m" (sum));
 
   return min_tsc;
 }
