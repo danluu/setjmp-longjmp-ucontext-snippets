@@ -8,7 +8,7 @@
 #include "rdtsc.h"
 #include "stddev.h"
 
-// #define GRAPH
+// #define GRAPH // This is the dumbest thing ever. TODO: take an argument
 
 #define MAX_NUM_LINES 10000
 #define LINE_SIZE 64
