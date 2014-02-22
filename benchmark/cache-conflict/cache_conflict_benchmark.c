@@ -5,21 +5,32 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "rdtsc.h"
-#include "stddev.h"
+#include <sys/mman.h>
+#include "../../rdtsc.h"
+#include "../../stddev.h"
 
 // #define GRAPH // This is the dumbest thing ever. TODO: take an argument
 
-#define MAX_NUM_LINES 10000
+#define MAX_NUM_LINES 100000
+#define ALLOC_SIZE  (2 * MAX_NUM_LINES * PG_SIZE)
 #define LINE_SIZE 64
 #define PG_SIZE 4096
 #define WORD_SIZE 8
+// #define HUGEPAGE 0
 
 // Do 'n' accesses with a relative offset of 'align'
 // pointer_chase == 0: do reads and use the read in a running computation
 // pointer_chase == 1: do read and use read to find next address
 uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
-  static uint64_t a[2 * MAX_NUM_LINES * PG_SIZE];
+  //  static uint64_t a[2 * MAX_NUM_LINES * PG_SIZE];
+ #ifdef HUGEPAGE
+  uint64_t *a = mmap(NULL, ALLOC_SIZE, PROT_READ | PROT_WRITE,
+		     MAP_PRIVATE| MAP_ANONYMOUS, -1, 0);
+  madvise(a, ALLOC_SIZE, MADV_HUGEPAGE);
+#else
+  static uint64_t a[ALLOC_SIZE];
+#endif // HUGEPAGE
+
   int sum = 0; // Prevent code from being optimized away
   uint64_t tsc_before, tsc_after, tsc, min_tsc;
   uint64_t offset;
@@ -66,7 +77,7 @@ uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
 void test_and_print(int n, int pointer_chase) {
   double diff;
   uint64_t aligned_time, unaligned_time;
-  int runs = 1000000;
+  int runs = 10000;
 
   aligned_time = access_mem(0, n, runs, pointer_chase);
   unaligned_time = access_mem(LINE_SIZE, n, runs, pointer_chase);
