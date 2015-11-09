@@ -16,7 +16,7 @@
 #define LINE_SIZE 64
 #define PG_SIZE 4096
 #define WORD_SIZE 8
-// #define HUGEPAGE 0
+// #define HUGEPAGE 1
 
 // Do 'n' accesses with a relative offset of 'align'
 // pointer_chase == 0: do reads and use the read in a running computation
@@ -77,7 +77,7 @@ uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
 void test_and_print(int n, int pointer_chase) {
   double diff;
   uint64_t aligned_time, unaligned_time;
-  int runs = 10000;
+  int runs = 100000;
 
   aligned_time = access_mem(0, n, runs, pointer_chase);
   unaligned_time = access_mem(LINE_SIZE, n, runs, pointer_chase);
