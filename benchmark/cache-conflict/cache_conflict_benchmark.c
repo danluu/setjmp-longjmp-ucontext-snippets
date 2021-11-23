@@ -50,7 +50,7 @@ uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
     offset += (PG_SIZE+align) / WORD_SIZE;
     a[i] = offset;
   }
-  a[n * PG_SIZE / WORD_SIZE] = 0;
+  a[offset] = 0;
 
   // Do accesses seperated by one page +/- alignment offset
   for (i = 0; i < runs; i++) {
@@ -61,7 +61,7 @@ uint64_t access_mem(int align, int n, int runs, int pointer_chase) {
       if (pointer_chase) {
 	offset = a[offset];
       } else {
-	offset += PG_SIZE + align;
+	offset += (PG_SIZE + align) / WORD_SIZE;
       }
     }
     RDTSC_STOP(tsc_after);
